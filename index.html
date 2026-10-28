@@ -853,7 +853,7 @@ function renderGrid(){
   const shown = gridAll ? list : list.slice(0,48);
   for (const p of shown){
     const b=el("button",{class:"thumb","data-id":p.id,"aria-label":"Photo du "+dfmt(p.date,{day:"numeric",month:"long"})});
-    b.innerHTML=`<img alt="" loading="lazy" src="${p.thumb||src(p)}"><span class="lbl">${dfmt(p.date,{day:"numeric",month:"short"})}${chosen.has(p.id)?"":" · bis"}</span>${!p.frame?'<span class="flag">à cadrer</span>':p.dateSrc!=="exif"?'<span class="flag">date ?</span>':""}`;
+    b.innerHTML=`<img alt="" loading="lazy" src="${p.thumb||src(p)}"><span class="lbl">${dfmt(p.date,{day:"numeric",month:"short"})}${chosen.has(p.id)?"":" · bis"}</span>${!p.frame?'<span class="flag">à cadrer</span>':p.framedBy==="copie"?'<span class="flag">à vérifier</span>':p.dateSrc!=="exif"?'<span class="flag">date ?</span>':""}`;
     b.onclick=()=>{ const i=seq.findIndex(x=>x.id===p.id); if (i>=0) show(i); if (assets) openEditor(p); };
     g.append(b);
   }
@@ -903,7 +903,8 @@ $("#fileIn").addEventListener("change", async e=>{
       const pr=await prepare(files[n]);
       const up=await assets.upload(pr.blob,{type:"image/jpeg"});
       const ref=db.collection("photos").doc();
-      const doc={asset:up.id, kind:k, date:pr.date, dateSrc:pr.dateSrc, time:pr.time, w:pr.w, h:pr.h, thumb:pr.thumb, frame:null, pick:false, addedAt:new Date().toISOString()};
+      const ref0=photos.filter(x=>x.kind===k && x.frame && x.w===pr.w && x.h===pr.h).sort((x,y)=>(y.date+(y.addedAt||"")).localeCompare(x.date+(x.addedAt||"")))[0];
+      const doc={asset:up.id, kind:k, date:pr.date, dateSrc:pr.dateSrc, time:pr.time, w:pr.w, h:pr.h, thumb:pr.thumb, frame:ref0?{...ref0.frame}:null, framedBy:ref0?"copie":null, pick:false, addedAt:new Date().toISOString()};
       await ref.set(doc); done.push({id:ref.id, ...doc, small:pr.small});
     }catch(err){ $("#impMsg").textContent=`${files[n].name} : ${err?.code==="quota_or_state"?"stockage plein":err?.code==="too_large"?"fichier trop lourd":"format non lu"}`; await new Promise(r=>setTimeout(r,1200)); }
   }
@@ -984,7 +985,7 @@ function openEditor(p){
   ed.ghost = [...list].reverse().find(x=>x.date<=p.date) || list[0] || null;
   $("#edGhost").hidden=!ed.ghost; if (ed.ghost) $("#edGhost").src=src(ed.ghost);
   $("#edPrevF").disabled=!ed.ghost;
-  $("#edAuto").hidden=!sample; $("#edMsg").textContent = p.framedBy==="claude"?"Cadré par Claude.":p.frame?"Cadré à la main.":"Pas encore cadrée.";
+  $("#edAuto").hidden=!sample; $("#edMsg").textContent = p.framedBy==="claude"?"Cadré par Claude.":p.framedBy==="copie"?"Cadrage repris de la photo précédente : vérifie avec la transparence puis enregistre.":p.frame?"Cadré à la main.":"Pas encore cadrée.";
   $("#edDel").textContent="Supprimer la photo"; delArm=false;
   $("#ed").hidden=false; document.body.style.overflow="hidden";
   syncZoom(); requestAnimationFrame(edPlace);
