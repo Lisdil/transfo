@@ -58,7 +58,7 @@ html.needs-login #login{display:flex;min-height:100vh;align-items:center;justify
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
-@media (min-width:760px){body{padding-bottom:40px}}
+@media (min-width:680px){body{padding-bottom:40px}}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--tape);outline-offset:2px}
@@ -80,7 +80,7 @@ nav.tabs{display:flex;gap:4px}
 nav.tabs a{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;text-decoration:none;color:var(--muted);font-weight:500}
 nav.tabs a[aria-current="page"]{background:var(--fg);color:var(--bg)}
 nav.tabs svg{width:18px;height:18px;flex:none}
-@media (max-width:759px){
+@media (max-width:679px){
   nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
     padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));justify-content:space-around}
   nav.tabs a{flex-direction:column;gap:2px;font-size:11.5px;padding:6px 10px;flex:1;justify-content:center}
@@ -134,7 +134,7 @@ details.how p{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
 .avg7 input{width:100%;min-width:0;text-align:center;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:6px 0;font-size:13px}
 textarea{width:100%;min-height:70px;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:10px;resize:vertical}
 .savebar{position:sticky;bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.12)}
-@media (min-width:760px){.savebar{bottom:12px}}
+@media (min-width:680px){.savebar{bottom:12px}}
 .savebar .status{font-size:13px;color:var(--muted);min-width:0;flex:1}
 @media (max-width:520px){.savebar .status{font-size:12px}.savebar .spacer{display:none}}
 
@@ -193,7 +193,7 @@ td.note{text-align:left;color:var(--muted);white-space:normal;min-width:160px}
 /* Éditeur de cadrage */
 .overlay{position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .ed{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
-@media (max-width:759px){.ed{grid-template-columns:1fr}}
+@media (max-width:679px){.ed{grid-template-columns:1fr}}
 .ed .stage{max-width:none;touch-action:none;cursor:grab}
 .ed .stage .ghost{opacity:.35;mix-blend-mode:normal}
 .guides{position:absolute;inset:0;pointer-events:none}
@@ -225,7 +225,7 @@ td.note{text-align:left;color:var(--muted);white-space:normal;min-width:160px}
 
 /* ---------- Séances ---------- */
 .types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-@media (min-width:760px){.types{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (min-width:680px){.types{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .tbtn{padding:16px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);text-align:left;display:flex;flex-direction:column;gap:6px;min-height:104px;justify-content:space-between}
 .tbtn:hover{border-color:var(--muted)}
 .tbtn b{font:700 30px/1 var(--f-display);text-transform:uppercase;letter-spacing:.01em}
@@ -315,7 +315,7 @@ td.note{text-align:left;color:var(--muted);white-space:normal;min-width:160px}
 .addline{display:flex;gap:8px}
 .addline input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;min-height:44px}
 .restbar{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;align-items:center;gap:8px;background:var(--fg);color:var(--bg);padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px))}
-@media (min-width:760px){.restbar{bottom:0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}}
+@media (min-width:680px){.restbar{bottom:0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}}
 .restbar b{font:700 30px/1 var(--f-display);flex:1}
 .restbar .btn{min-height:36px;padding:4px 10px;background:transparent;color:var(--bg);border-color:color-mix(in srgb,var(--bg) 40%,transparent)}
 .restbar.over{background:var(--tape);color:var(--on-tape)}
@@ -457,6 +457,50 @@ a.btn{text-decoration:none;color:var(--fg)}
 .splitline::after{content:"⟷";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:var(--tape);color:var(--on-tape);display:grid;place-items:center;font-size:16px;font-weight:700}
 .stage .tagL,.stage .tagR{position:absolute;top:10px;background:var(--scrim);color:#fff;font-size:12px;padding:3px 8px;border-radius:6px;pointer-events:none}
 .stage .tagL{left:10px} .stage .tagR{right:10px}
+/* ---------- iPhone Duo : fermé = une colonne, ouvert = deux colonnes ---------- */
+.duo{display:flex;flex-direction:column;gap:14px}
+.duo>.col{display:contents}
+.duo #tdProj{order:5}
+.rside{display:none!important}
+@media (min-width:680px){
+  .wrap{max-width:1180px}
+  .duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
+  .duo>.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .duo.photos{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+  .duo.photos .stage{max-width:none}
+  .duo.run{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+  .rside{display:flex!important;position:sticky;top:calc(10px + env(safe-area-inset-top,0px))}
+  .tgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #nSub,#sSum{max-width:720px;margin:0 auto;width:100%}
+  .ring{width:min(22vw,200px)}
+  .types{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* écran ouvert tenu à l'horizontale : en-tête compact pour garder de la hauteur utile */
+@media (min-width:680px) and (max-height:760px){
+  header.top .wrap{padding-block:10px 8px}
+  .brand h1{font-size:22px} .brand p{display:none}
+  .tape{height:10px;background-size:100% 7px,100% 4px}
+  main .wrap{padding-block:14px}
+  .tdhead b{font-size:26px}
+}
+/* si iOS expose la charnière, on garde les deux colonnes de part et d'autre */
+@media (horizontal-viewport-segments: 2){
+  .duo{column-gap:calc(env(viewport-segment-left 1 0, 0px) - env(viewport-segment-right 0 0, 0px) + 22px)}
+}
+.rside{flex-direction:column;gap:12px}
+.rside .panel{display:flex;flex-direction:column;gap:8px}
+.rside h3{color:var(--fg);font-size:13px}
+.rhist{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.rhist div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.rhist div:last-child{border-bottom:0}
+.rhist span{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rplan{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.rplan button{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;font-size:13.5px;color:var(--fg)}
+.rplan button:last-child{border-bottom:0}
+.rplan button.cur{background:color-mix(in srgb,var(--tape) 18%,var(--surface));font-weight:600}
+.rplan button.done span:first-child::before{content:"✓ ";color:var(--good)}
+.rplan button.skip{opacity:.5;text-decoration:line-through}
+.rplan button span:last-child{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:500;z-index:60;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -489,24 +533,28 @@ a.btn{text-decoration:none;color:var(--fg)}
   <!-- AUJOURD'HUI -->
   <section class="view" id="v-today" hidden>
     <div class="tdhead"><b id="tdTitle"></b><span id="tdSub"></span></div>
+    <div class="duo"><div class="col">
     <div class="tcard" id="tdWeight">
       <div class="row"><h3>Pesée du matin</h3><span class="spacer"></span><span class="sub" id="twAvg"></span></div>
       <div class="row" style="gap:10px;flex-wrap:nowrap"><div class="stp wstp"><button data-w="-" aria-label="Moins 100 g">−</button><input id="twIn" inputmode="decimal" aria-label="Poids du jour"><button data-w="+" aria-label="Plus 100 g">+</button><small>kg</small></div><button class="btn primary" id="twSave">Enregistrer</button></div>
       <div class="plot" id="twChart"></div>
     </div>
+    <button class="tcard tlink" id="tdProj"></button>
+    </div><div class="col">
     <div class="tgrid">
       <button class="tcard tlink" id="tdSeance"></button>
       <button class="tcard tlink" id="tdNutri"></button>
       <button class="tcard tlink" id="tdPhoto"></button>
       <button class="tcard tlink" id="tdMesure"></button>
     </div>
-    <button class="tcard tlink" id="tdProj"></button>
+    </div></div>
   </section>
 
   <!-- SÉANCES -->
   <section class="view" id="v-seances" hidden>
     <div id="sHome" class="view">
       <div class="row"><h2>Séances</h2><span class="spacer"></span><span class="sub" id="sWeek"></span></div>
+      <div class="duo"><div class="col">
       <div class="types" id="sTypes"></div>
       <div class="grp panel" id="calBox">
         <div class="row"><h3 id="calTitle" style="color:var(--fg);font-size:14px"></h3><span class="spacer"></span><button class="iconbtn" id="calPrev" aria-label="Mois précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button><button class="iconbtn" id="calNext" aria-label="Mois suivant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button></div>
@@ -514,6 +562,7 @@ a.btn{text-decoration:none;color:var(--fg)}
         <div class="calleg" id="calLeg"></div>
       </div>
       <div class="grp panel"><div class="row"><h3 style="color:var(--fg);font-size:14px">Séries cette semaine</h3><span class="spacer"></span><span class="sub">vert : 10 séries et plus</span></div><div class="musc" id="sMusc"></div></div>
+      </div><div class="col">
       <div class="grp" id="sTonBox" hidden>
         <div class="row"><h3>Tonnage par séance</h3><span class="spacer"></span><div class="seg" id="sTonSeg" role="group" aria-label="Type de séance"></div></div>
         <div class="chart"><header><b id="sTonTitle"></b><span class="legend num" id="sTonLast"></span></header><div class="plot" id="sTonPlot"></div></div>
@@ -528,11 +577,14 @@ a.btn{text-decoration:none;color:var(--fg)}
         <div class="hlist" id="sHist"></div>
         <button class="btn ghost" id="sHistMore" hidden>Afficher plus</button>
       </div>
+      </div></div>
     </div>
     <div id="sRun" class="view" hidden>
+      <div class="duo run"><div class="col">
       <div class="runhead"><div class="t"><b id="rTitle"></b><span id="rSub"></span></div><button class="btn ghost danger" id="rCancel">Abandonner</button></div>
       <div class="dots" id="rDots" aria-label="Exercices de la séance"></div>
       <div id="rFocus"></div>
+      </div><div class="col rside" id="rSide"></div></div>
     </div>
     <div id="sSum" class="view" hidden></div>
   </section>
@@ -541,6 +593,7 @@ a.btn{text-decoration:none;color:var(--fg)}
   <!-- NUTRITION -->
   <section class="view" id="v-nutrition" hidden>
     <div id="nHome" class="view">
+      <div class="duo"><div class="col">
       <div class="ndaybar">
         <button class="iconbtn" id="nPrev" aria-label="Jour précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button>
         <b id="nDate" class="ndate"></b>
@@ -553,6 +606,7 @@ a.btn{text-decoration:none;color:var(--fg)}
       </div>
       <div class="nmacros" id="nMacros"></div>
       <div class="streaks" id="nStreaks"></div>
+      </div><div class="col">
       <div class="tiles4" id="nTiles"></div>
       <div class="row"><button class="btn ghost" id="nLibre">+ Repas libre (kcal estimées)</button></div>
       <div class="grp" id="nLibres"></div>
@@ -561,6 +615,7 @@ a.btn{text-decoration:none;color:var(--fg)}
         <div class="chart"><div class="plot" id="nChart"></div><div class="legend" style="margin-top:6px"><span><i style="background:var(--nk)"></i>par jour</span><span><i style="background:var(--fg)"></i>moyenne 7 jours</span><span><i style="background:var(--muted);height:1px"></i>objectif</span></div></div>
       </div>
       <details class="panel" id="nTargets"><summary style="cursor:pointer;font-weight:600">Mes objectifs</summary><div class="tform" id="nTgtForm" style="margin-top:12px"></div></details>
+      </div></div>
     </div>
     <div id="nSub" class="view" hidden></div>
   </section>
@@ -629,6 +684,7 @@ a.btn{text-decoration:none;color:var(--fg)}
       <div class="progress" style="margin-top:8px"><i id="impBar"></i></div>
       <p class="sub" id="impMsg" style="margin-top:6px"></p>
     </div>
+    <div class="duo photos"><div class="col">
     <div class="viewer">
       <div class="stages" id="stages">
         <div class="stage" id="stA"><img id="imA" alt=""><div class="before" id="bfA" hidden><img id="imB2" alt=""></div><div class="splitline" id="splitL" hidden></div><span class="tagL" id="tagL" hidden></span><span class="tagR" id="tagR" hidden></span><div class="cap"><div><b id="capA"></b><br><span id="capA2"></span></div><span id="capA3"></span></div><div class="empty" id="emptyA">Aucune photo pour l'instant.<br>Ajoute tes photos depuis ta photothèque.</div></div>
@@ -645,6 +701,7 @@ a.btn{text-decoration:none;color:var(--fg)}
       </div>
       <p class="sub" style="text-align:center">Glisse le doigt sur la photo pour défiler, ou utilise ← → et la barre d'espace.</p>
     </div>
+    </div><div class="col">
     <div class="grp">
       <div class="row"><h3 id="gridTitle">Toutes les photos</h3><span class="spacer"></span>
         <button class="btn" id="autoAll" hidden>Cadrer automatiquement</button></div>
@@ -653,6 +710,7 @@ a.btn{text-decoration:none;color:var(--fg)}
       <button class="btn ghost" id="gridMore" hidden>Tout afficher</button>
       <p class="meter" id="meter"></p>
     </div>
+    </div></div>
   </section>
 
   <!-- TANITA -->
@@ -1532,8 +1590,16 @@ function renderRun(){
       <button class="chk${sl.checks[i]?" on":""}" data-act="chk" aria-label="Série ${i+1} faite">✓</button>`;
     sets.append(r); updRow(sl,v,i,r);
   });
-  host.append(f); updTon(sl,v);
+  host.append(f); updTon(sl,v); renderRunSide(sl,v);
 }
+function renderRunSide(sl,v){
+  const side=$("#rSide"); if (!side) return;
+  const past=[...sessions].sort((a,b)=>(b.startedAt||b.date).localeCompare(a.startedAt||a.date)).map(s=>({s, e:(s.exercises||[]).find(e=>sameName(e.name,v.name))})).filter(x=>x.e).slice(0,6);
+  const b=best(v.name);
+  side.innerHTML=`<div class="panel"><h3>Historique · ${esc(v.name)}</h3>${past.length?`<div class="rhist">${past.map(x=>`<div><b>${dfmt(x.s.date,{day:"numeric",month:"short"})}</b><span>${esc(summary(x.e,x.e.sets))}${x.e.tonnage?" · "+kg(x.e.tonnage):""}</span></div>`).join("")}</div>`:`<p class="sub">Première fois avec cet exercice.</p>`}${b&&!noW(v)?`<p class="sub">Record : <b>${esc(fmtSet(b,v))}</b></p>`:""}</div>
+    <div class="panel"><h3>Séance · ${kg(sessionTon())}</h3><div class="rplan">${draft.slots.map((x,i)=>{ const xv=curVar(x); const t=x.status==="done"||i===draft.idx?exTon(xv,xv.sets):0; return `<button data-i="${i}" class="${i===draft.idx?"cur":""} ${x.status==="done"?"done":x.status==="skip"?"skip":""}"><span>${esc(xv.name)}</span><span>${t?kg(t):""}</span></button>`; }).join("")}</div></div>`;
+}
+$("#rSide").addEventListener("click", e=>{ const b=e.target.closest("button[data-i]"); if (!b||!draft) return; draft.idx=+b.dataset.i; saveDraft(); renderRun(); });
 function allNames(){ const s=new Set(); for (const t of Object.values(templates)) for (const sl of tplSlots(t)) for (const v of sl.variants) s.add(v.name); for (const se of sessions) for (const e of se.exercises||[]) s.add(e.name); return [...s].sort((a,b)=>a.localeCompare(b,"fr")); }
 function sessionTon(){ return draft.slots.reduce((a,sl)=> sl.status==="skip"?a: a+(sl.status==="done"||sl===curSlot()? exTon(curVar(sl),curVar(sl).sets):0),0); }
 function updRow(sl,v,i,row){
@@ -1552,7 +1618,7 @@ function updTon(sl,v){
   const now=exTon(v,v.sets), prev=exTon(v,sl.prev[v.vid]||[]);
   t.textContent=kg(now); const d=$("#exTonD"); d.className=""; d.textContent="";
   if (prev){ const dd=now-prev; if (dd){ d.className="delta "+(dd>0?"good":"flat"); d.textContent=`(${dd>0?"+":"−"}${Math.abs(Math.round(dd)).toLocaleString("fr-FR")} kg)`; } }
-  $("#rSub").textContent=$("#rSub").textContent.replace(/· [\d\s ]+ kg$/,"· "+kg(sessionTon()));
+  $("#rSub").textContent=$("#rSub").textContent.replace(/· [\d\s ]+ kg$/,"· "+kg(sessionTon())); renderRunSide(sl,v);
 }
 $("#rDots").addEventListener("click", e=>{ const b=e.target.closest("button[data-i]"); if (!b||!draft) return; draft.idx=+b.dataset.i; saveDraft(); renderRun(); scrollTo({top:0}); });
 $("#rFocus").addEventListener("click", e=>{
