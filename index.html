@@ -1688,12 +1688,15 @@ const F={ // valeurs pour 100 g (Ciqual 2025, sauf mention)
   epi:{n:"Épinards à la crème Repère",k:57,p:2.5,g:4.1,l:2.9},
   moutarde:{n:"Moutarde",k:151,p:6.9,g:4.3,l:11.2},
   rape:{n:"Fromage râpé (emmental)",k:368,p:27.6,g:0.6,l:28.2},
+  // Chili maison, 6 portions : 700 g steak haché 5 %, 750 g purée de tomate, 520 g riz cru, 500 g poivron, 1 kg haricots rouges cuits
+  chili:{n:"Chili",k:123.05,p:8.41,g:17.57,l:1.42,u:578.33,un:"portion"},
 };
 const DEF_CFG={
   targets:{kcal:2350,p:143,l:63,g:287},
   pdj:{normal:[{f:F.oeuf,q:165},{f:F.huile,q:5},{f:F.weeta,q:38},{f:F.lait,q:200}],
        light:[{f:F.oeuf,q:165},{f:F.huile,q:5},{f:F.weeta,q:19},{f:F.lait,q:150}]},
   colla:[{f:F.choco,q:10},{f:F.brasse,q:250}],
+  plats:[{f:F.chili,q:578.33}],
   cats:{prot:[{f:F.poulet,q:160},{f:F.steak,q:100},{f:F.oeuf,q:165}],
         gluc:[{f:F.pates,q:100},{f:F.riz,q:100},{f:F.pdt,q:550},{f:F.cous,q:100}],
         leg:[{f:F.epi,q:200}],
@@ -1801,7 +1804,7 @@ function renderSub(){
     h.innerHTML=backHead("Petit-déj","Choisis ta formule")+`<div class="opts">${o("normal","Normal")}${o("light","Light")}<button class="opt other" data-pdj="autre"><span class="nm"><b>Autre</b><small>Composer librement</small></span><span class="kc">+</span></button></div>`; return; }
   if (s.v==="meal"){ const its=d.meals[s.meal]||[]; const m=sumItems(its);
     h.innerHTML=backHead(mealName(s.meal), `${nf(m.kcal,0)} kcal · ${nf(m.p,0)} P · ${nf(m.g,0)} G · ${nf(m.l,0)} L`)+
-      `<div class="cat4">${CATS.map(([c,l,col])=>{ const ci=its.filter(x=>x.cat===c); return `<button class="ct${ci.length?" on":""}" data-cat="${c}"><span class="h"><span class="dot" style="background:${col}"></span><b>${l}</b></span>${ci.length?`<ul>${ci.map(x=>`<li>${esc(x.f.n.split(" (")[0])}<span>${qtyLabel(x.f,x.q)}</span></li>`).join("")}</ul>`:`<span class="empty">Choisir…</span>`}</button>`; }).join("")}</div>`+
+      `${(cfg().plats||[]).length?`<h3>Plat habituel</h3><div class="opts">${cfg().plats.map((o,i)=>{ const m=macro(o.f,o.q); return `<button class="opt" data-plat="${i}"><span class="nm"><b>${esc(o.f.n)}</b><small>${qtyLabel(o.f,o.q)} · ${nf(m.p,0)} P · ${nf(m.g,0)} G · ${nf(m.l,0)} L</small></span><span class="kc">${nf(m.kcal,0)}<small> kcal</small></span></button>`; }).join("")}</div><h3>Ou compose ton assiette</h3>`:""}<div class="cat4">${CATS.map(([c,l,col])=>{ const ci=its.filter(x=>x.cat===c); return `<button class="ct${ci.length?" on":""}" data-cat="${c}"><span class="h"><span class="dot" style="background:${col}"></span><b>${l}</b></span>${ci.length?`<ul>${ci.map(x=>`<li>${esc(x.f.n.split(" (")[0])}<span>${qtyLabel(x.f,x.q)}</span></li>`).join("")}</ul>`:`<span class="empty">Choisir…</span>`}</button>`; }).join("")}</div>`+
       (its.some(x=>!x.cat)?`<div class="lines">${its.filter(x=>!x.cat).map(x=>lineHTML(x)).join("")}</div>`:"")+
       `<button class="btn primary bigbtn" data-nav="done">Valider le repas</button>${its.length?`<button class="btn ghost danger" data-nav="clear">Vider ce repas</button>`:""}`; return; }
   if (s.v==="cat"){ const c=cfg(); const list=c.cats[s.cat]||[]; const its=(d.meals[s.meal]||[]).filter(x=>x.cat===s.cat); const lab=CATS.find(x=>x[0]===s.cat)[1];
@@ -1829,6 +1832,7 @@ $("#nSub").addEventListener("click", e=>{
   if (nav==="back") return back();
   if (b.dataset.pdj){ const k=b.dataset.pdj; if (k==="autre"){ nStack=[{v:"edit",meal:"pdj"}]; return renderNutrition(); }
     d.meals.pdj=clone(cfg().pdj[k]).map(x=>({...x,id:nid()})); saveDay(); nStack=[]; lastPop="pdj"; renderNutrition(); toast(`Petit-déj ${k==="light"?"light":"normal"} ajouté · ${nf(sumItems(d.meals.pdj).kcal,0)} kcal`); scrollTo({top:0}); return; }
+  if (b.dataset.plat!=null){ const o=cfg().plats[+b.dataset.plat]; nStack.push({v:"qty",meal:s.meal,f:clone(o.f),q:o.q,def:o.q}); renderNutrition(); scrollTo({top:0}); return; }
   if (b.dataset.cat){ nStack.push({v:"cat",meal:s.meal,cat:b.dataset.cat}); renderNutrition(); scrollTo({top:0}); return; }
   if (b.dataset.opt){ if (b.dataset.opt==="autre"){ return openPick(f=>{ nStack.push({v:"qty",meal:s.meal,cat:s.cat,f,q:f.u?f.u:100,def:100,learn:true}); renderNutrition(); }); }
     const o=cfg().cats[s.cat][+b.dataset.opt]; nStack.push({v:"qty",meal:s.meal,cat:s.cat,f:clone(o.f),q:o.q,def:o.q,opt:+b.dataset.opt}); renderNutrition(); scrollTo({top:0}); return; }
