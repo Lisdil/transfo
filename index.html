@@ -501,6 +501,9 @@ a.btn{text-decoration:none;color:var(--fg)}
 .rplan button.done span:first-child::before{content:"✓ ";color:var(--good)}
 .rplan button.skip{opacity:.5;text-decoration:line-through}
 .rplan button span:last-child{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rptext{white-space:pre-wrap;font:12.5px/1.5 var(--f-mono);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0;max-height:70vh;overflow:auto}
+.rpcanvas{width:100%;height:auto;border-radius:14px;background:var(--stage)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:500;z-index:60;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -546,7 +549,28 @@ a.btn{text-decoration:none;color:var(--fg)}
       <button class="tcard tlink" id="tdNutri"></button>
       <button class="tcard tlink" id="tdPhoto"></button>
       <button class="tcard tlink" id="tdMesure"></button>
+      <div class="tcard" id="tdPas"></div>
+      <button class="tcard tlink" id="tdCoach"></button>
     </div>
+    </div></div>
+  </section>
+
+  <!-- RAPPORT COACH -->
+  <section class="view" id="v-rapport" hidden>
+    <div class="row"><a class="iconbtn" href="#today" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></a><h2>Rapport pour le coach</h2></div>
+    <p class="sub" id="rpWhen"></p>
+    <div class="duo"><div class="col">
+      <div class="tcard"><span class="k">1 · Envoyer</span>
+        <div class="btns"><button class="btn primary" id="rpShare">Partager rapport + photos</button><button class="btn" id="rpCopy">Copier le texte</button><button class="btn" id="rpImg">Partager la planche photo</button></div>
+        <p class="sub">Dans la conversation de ton coach (projet Claude), colle le texte et joins la planche photo. Sur iPhone, « Partager » ouvre directement l'app Claude.</p>
+      </div>
+      <div class="tcard"><span class="k">2 · Appliquer les nouvelles variables du coach</span>
+        <textarea id="rpPaste" placeholder="Colle ici la réponse du coach (au moins le bloc VARIABLES)"></textarea>
+        <div class="row"><button class="btn primary" id="rpApply">Appliquer</button><span class="sub" id="rpApplied"></span></div>
+      </div>
+      <canvas id="rpCanvas" class="rpcanvas" aria-label="Planche photo de la semaine"></canvas>
+    </div><div class="col">
+      <pre class="rptext" id="rpText"></pre>
     </div></div>
   </section>
 
@@ -658,7 +682,7 @@ a.btn{text-decoration:none;color:var(--fg)}
 
   <!-- COURBES -->
   <section class="view" id="v-courbes" hidden>
-    <div class="row"><h2>Progrès</h2><span class="spacer"></span><a class="btn" href="#saisie">Saisir mes mensurations</a><a class="btn" href="#tanita">Bilan Tanita</a><button class="btn" id="csvBtn" hidden>Exporter en CSV</button></div>
+    <div class="row"><h2>Progrès</h2><span class="spacer"></span><a class="btn" href="#saisie">Saisir mes mensurations</a><a class="btn" href="#tanita">Bilan Tanita</a><a class="btn" href="#rapport">Rapport coach</a><button class="btn" id="csvBtn" hidden>Exporter en CSV</button></div>
     <div class="proj" id="cProj"></div>
     <label class="sub row" style="gap:8px">Objectif de tour de taille <input id="gWaist" inputmode="decimal" class="exsel" style="width:80px"> cm</label>
     <div class="chart"><header><b>Pesées quotidiennes</b><span class="legend"><span><i style="background:var(--fg)"></i>moyenne 7 j</span><span><i style="background:var(--s1)"></i>pesée</span></span></header><div class="plot" id="cW"></div></div>
@@ -824,11 +848,11 @@ let curWeek = iso(monday(new Date()));
 let dirty=false;
 
 /* ---------- Navigation ---------- */
-const VIEWS=["today","seances","nutrition","saisie","courbes","photos","tanita"];
+const VIEWS=["today","seances","nutrition","saisie","courbes","photos","tanita","rapport"];
 function route(){
   let v=(location.hash||"").slice(1); if (!VIEWS.includes(v)) v="today";
   VIEWS.forEach(x=>$("#v-"+x).hidden = x!==v);
-  const navV = (v==="saisie"||v==="tanita") ? "courbes" : v;
+  const navV = (v==="saisie"||v==="tanita") ? "courbes" : v==="rapport" ? "today" : v;
   $$("nav.tabs a").forEach(a=>{ if (a.dataset.v===navV) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
   if (v!=="photos") stopPlay();
   if (v==="courbes") renderCourbes();
@@ -836,6 +860,7 @@ function route(){
   if (v==="tanita") renderTanita();
   if (v==="seances") renderSeances();
   if (v==="today") renderToday();
+  if (v==="rapport") renderRapport();
   if (v==="nutrition") renderNutrition();
   current = v;
 }
@@ -2034,6 +2059,7 @@ function renderToday(){
   const mon=iso(monday(new Date())), thu=addDays(parseISO(mon),3), isThu=new Date().getDay()===4, savedW=!!weeksMap[mon];
   $("#tdMesure").className="tcard tlink"+(savedW?" ok":(new Date().getDay()>=4||new Date().getDay()===0?" hot":""));
   $("#tdMesure").innerHTML=`<span class="k">Mensurations</span><span class="v">${savedW?"Faites":isThu?"C'est jeudi":(()=>{ const n=daysBetween(iso(new Date()),iso(thu)); return n===1?"Demain":n>1?"Dans "+n+" j":"En retard"; })()}</span><span class="s">${savedW?"Semaine du "+dfmt(mon,{day:"numeric",month:"short"}):dfmt(thu,{weekday:"long",day:"numeric",month:"short"})}</span><span class="go">${savedW?"Voir mes courbes →":"Saisir →"}</span>`;
+  renderStepsCard(); renderCoachCard();
   $("#tdProj").innerHTML=`<span class="k">Où j'en suis</span><div class="proj">${projCards()}</div><span class="go">Toutes mes courbes →</span>`;
 }
 $("#tdSeance").onclick=()=>{ const today=iso(new Date()); const done=sessions.some(x=>x.date===today); const sg=suggestNext(); location.hash="seances"; if (!done && !draft && sg) setTimeout(()=>startSession(sg.type),0); };
@@ -2069,8 +2095,121 @@ function renderMuscles(){
 }
 $("#gWaist").addEventListener("change", e=>{ const v=num(e.target.value); if (!isFinite(v)) return; goals={...goals, waist:v}; db?.doc("settings/goals").set(goals).catch(()=>{}); renderCourbes(); });
 let todaySig="";
-setInterval(()=>{ if (current!=="today" || document.visibilityState!=="visible" || document.activeElement===$("#twIn")) return; const t=iso(new Date());
-  const sig=[sessions.length, photos.length, Object.keys(weighins).length, weeks.length, Math.round(dayTot(t).kcal), !!draft, t].join("|"); if (sig!==todaySig){ todaySig=sig; renderToday(); } }, 1200);
+setInterval(()=>{ if (current!=="today" || document.visibilityState!=="visible" || document.activeElement===$("#twIn") || document.activeElement===$("#psIn")) return; const t=iso(new Date());
+  const sig=[sessions.length, photos.length, Object.keys(weighins).length, Object.keys(steps).length, JSON.stringify(steps[iso(addDays(new Date(),-1))]||0), weeks.length, Math.round(dayTot(t).kcal), !!draft, t].join("|"); if (sig!==todaySig){ todaySig=sig; renderToday(); } }, 1200);
+/* =========================================================
+   PAS ET RAPPORT HEBDOMADAIRE POUR LE COACH
+   ========================================================= */
+let steps={};
+const stepsGoal=()=>goals.steps||10000;
+function stepsAvg(end,n=7){ const v=[]; for (let i=0;i<n;i++){ const d=iso(addDays(parseISO(end),-i)); if (isFinite(steps[d]?.n)) v.push(steps[d].n); } return v.length?{avg:v.reduce((a,b)=>a+b,0)/v.length,n:v.length}:null; }
+function renderStepsCard(){
+  const t=iso(new Date()), y=iso(addDays(new Date(),-1)); const today=steps[t]?.n, yest=steps[y]?.n; const a=stepsAvg(y);
+  const c=$("#tdPas"); const g=stepsGoal();
+  c.className="tcard"+((yest||0)>=g?" ok":"");
+  c.innerHTML=`<span class="k">Pas</span><span class="v">${isFinite(today)?nf(today,0):"—"}<small style="font:400 12px var(--f-body);color:var(--muted)"> aujourd'hui</small></span>
+    <span class="s">Hier ${isFinite(yest)?nf(yest,0):"—"} · moyenne 7 j ${a?nf(a.avg,0):"—"}</span><div class="minibar"><em style="width:${Math.min(100,(a?.avg||0)/g*100)}%;background:var(--s3)"></em></div>
+    <div class="row" style="gap:6px;flex-wrap:nowrap"><input id="psIn" inputmode="numeric" class="exsel" style="flex:1;min-width:0" placeholder="Pas d'hier"><button class="btn" id="psSave">OK</button></div>`;
+  $("#psSave").onclick=async()=>{ const v=Math.round(num($("#psIn").value)); if (!isFinite(v)||v<0) return toast("Nombre de pas invalide."); steps[y]={date:y,n:v}; renderToday(); try{ await db.doc("steps/"+y).set(steps[y]); toast("Pas d'hier enregistrés"); }catch{ toast("Enregistrement impossible."); } };
+}
+function renderCoachCard(){
+  const c=$("#tdCoach"); const isThu=new Date().getDay()===4; const mon=iso(monday(new Date())); const saved=!!weeksMap[mon];
+  c.className="tcard tlink"+(isThu&&saved?" hot":"");
+  c.innerHTML=`<span class="k">Coach</span><span class="v">${isThu&&saved?"Rapport prêt":"Rapport"}</span><span class="s">${isThu?(saved?"Mesures du jour saisies : envoie ton bilan":"Saisis d'abord tes mesures du jeudi"):"Bilan de la semaine à envoyer le jeudi"}</span><span class="go">Préparer le rapport →</span>`;
+}
+$("#tdCoach").onclick=()=>{ location.hash="rapport"; };
+
+function nearestPhoto(kind, date){ let best=null; for (const p of photos) if (p.kind===kind && p.date<=date && (!best || p.date>best.date || (p.date===best.date && p.pick))) best=p; return best; }
+function firstPhoto(kind){ let b=null; for (const p of photos) if (p.kind===kind && (!b||p.date<b.date)) b=p; return b; }
+function buildReport(){
+  const today=iso(new Date()), end=iso(addDays(new Date(),-1)), start=iso(addDays(new Date(),-7));
+  const range=[]; for (let d=start; d<=end; d=iso(addDays(parseISO(d),1))) range.push(d);
+  const mon=iso(monday(new Date())); const wk=weeksMap[mon]||weeks.at(-1)||{}; const prevWk=weeks.filter(w=>w.date<wk.date).at(-1)||{}; const first=weeks[0]||{};
+  const nWeek=weeks.length? Math.round((parseISO(wk.date||mon)-parseISO(weeks[0].date))/6048e5)+1 : 1;
+  const s0=startDate(); const dayN=s0?daysBetween(s0,today)+1:null; const G=T();
+  const L=[]; const f1=v=>isFinite(v)?nf(v,1):"—"; const dl=(a,b)=>isFinite(a)&&isFinite(b)?sgn(a-b,1):"—";
+  L.push(`# RAPPORT HEBDO — semaine ${nWeek}${dayN?` (jour ${dayN})`:""} — ${dfmt(today,{weekday:"long",day:"numeric",month:"long",year:"numeric"})}`);
+  L.push(`Période analysée : du ${dfmt(start,{day:"numeric",month:"short"})} au ${dfmt(end,{day:"numeric",month:"short"})} (mensurations du ${dfmt(iso(addDays(parseISO(wk.date||mon),3)),{day:"numeric",month:"short"})}).`,"");
+  L.push("## 1. Mensurations (cm, poids en kg)","| Mesure | Cette semaine | Sem. précédente | Δ semaine | Départ | Δ total |","|---|---|---|---|---|---|");
+  for (const m of M){ const a=wk[m.k], b=prevWk[m.k], c=first[m.k]; if (!isFinite(a)&&!isFinite(b)) continue; L.push(`| ${m.label} | ${f1(a)} | ${f1(b)} | ${dl(a,b)} | ${f1(c)} | ${dl(a,c)} |`); }
+  if (wk.notes) L.push("", `Notes de la semaine : ${wk.notes}`);
+  // pesées
+  const wl=range.concat([today]).map(d=>[d,weighins[d]?.kg]).filter(x=>isFinite(x[1]));
+  const wa=wAvg(today), wp=wAvg(iso(addDays(new Date(),-7)));
+  L.push("","## 2. Pesées quotidiennes", wl.length? wl.map(([d,k])=>`${dfmt(d,{weekday:"short",day:"numeric"})} ${nf(k,1)}`).join(" · ") : "Aucune pesée cette semaine.");
+  if (wa) L.push(`Moyenne 7 j : ${nf(wa.avg,2)} kg (${wa.n} pesées)${wp?` · semaine précédente ${nf(wp.avg,2)} kg · Δ ${sgn(wa.avg-wp.avg,2)} kg`:""}`);
+  // pas
+  const sl=range.map(d=>[d,steps[d]?.n]);
+  const sv=sl.filter(x=>isFinite(x[1])).map(x=>x[1]);
+  L.push("","## 3. Pas", sl.map(([d,n])=>`${dfmt(d,{weekday:"short",day:"numeric"})} ${isFinite(n)?nf(n,0):"—"}`).join(" · "));
+  if (sv.length) L.push(`Moyenne : ${nf(sv.reduce((a,b)=>a+b,0)/sv.length,0)} pas/j (objectif ${nf(stepsGoal(),0)}) · ${sv.filter(n=>n>=stepsGoal()).length}/${sv.length} jours à l'objectif`);
+  // nutrition
+  L.push("","## 4. Nutrition",`Objectifs actuels : ${G.kcal} kcal · P ${G.p} g · G ${G.g} g · L ${G.l} g`,"| Jour | kcal | P | G | L | Repas saisis |","|---|---|---|---|---|---|");
+  const nd=[]; for (const d of range){ if (!nLog[d]){ L.push(`| ${dfmt(d,{weekday:"short",day:"numeric"})} | non saisi | | | | |`); continue; } const t=dayTot(d); nd.push(t); const x=nLog[d];
+    const meals=MEALS.filter(([k])=>(x.meals?.[k]||[]).length).map(([k,l])=>`${l}: ${(x.meals[k]).map(i=>`${i.f.n.split(" (")[0]} ${qtyLabel(i.f,i.q)}`).join(", ")}`).concat((x.libres||[]).map(l=>`${l.label||"Repas libre"} ~${l.k} kcal`)).join(" / ");
+    L.push(`| ${dfmt(d,{weekday:"short",day:"numeric"})} | ${nf(t.kcal,0)} | ${nf(t.p,0)} | ${nf(t.g,0)} | ${nf(t.l,0)} | ${meals} |`); }
+  if (nd.length){ const av=k=>nd.reduce((a,x)=>a+x[k],0)/nd.length; L.push(`Moyenne (${nd.length} j saisis) : ${nf(av("kcal"),0)} kcal · P ${nf(av("p"),0)} · G ${nf(av("g"),0)} · L ${nf(av("l"),0)}`); }
+  const mt=maintenance(); L.push(mt.need?`Maintenance estimée : ${mt.need}`:`Maintenance estimée : ${nf(mt.tdee,0)} kcal (apport moyen ${nf(mt.intake,0)}, ${mt.deficit<0?"déficit":"surplus"} ${nf(Math.abs(mt.deficit),0)} kcal/j, tendance ${sgn(mt.perWeek,2)} kg/sem sur 21 j)`);
+  // séances
+  const ss=sessions.filter(s=>s.date>=start&&s.date<=today).sort((a,b)=>(a.startedAt||a.date).localeCompare(b.startedAt||b.date));
+  L.push("","## 5. Séances",`${ss.length} séance(s) : ${ss.map(s=>TL[s.type]).join(", ")||"aucune"}`);
+  for (const s of ss){ const prev=sessions.filter(x=>x.type===s.type&&(x.startedAt||x.date)<(s.startedAt||s.date)).sort((a,b)=>(b.startedAt||b.date).localeCompare(a.startedAt||a.date))[0];
+    L.push("",`### ${dfmt(s.date,{weekday:"long",day:"numeric"})} — ${TL[s.type]} · ${kg(s.tonnage||0)}${prev?.tonnage?` (${sgn((s.tonnage-prev.tonnage)/prev.tonnage*100,0)} % vs précédente)`:""}${s.durationMin?` · ${s.durationMin} min`:""}${s.records?` · ${s.records} record(s)`:""}`);
+    for (const e of s.exercises||[]) L.push(`- ${e.name} : ${summary(e,e.sets)}${e.tonnage?` (${kg(e.tonnage)})`:""}`);
+    if (s.skipped?.length) L.push(`- Passés : ${s.skipped.join(", ")}`); if (s.notes) L.push(`- Notes : ${s.notes}`); }
+  const cnt={}; MUSC.forEach(([m])=>cnt[m]=0); for (const s of ss) for (const e of s.exercises||[]){ if (e.load==="cardio") continue; for (const [m,re] of MUSC) if (re.test(e.name)) cnt[m]+=(e.sets||[]).length; }
+  L.push("","Séries par muscle sur la période : "+MUSC.map(([m])=>`${m} ${cnt[m]}`).join(" · "));
+  // projection et variables
+  const pj=projection(); if (pj && pj.date) L.push("",`Projection tour de taille ${pj.tgt} cm : ${dfmt(pj.date,{day:"numeric",month:"long"})} (${sgn(pj.perWeek,1)} cm/sem)`);
+  L.push("","## 6. Photos","Planche jointe : corps et visage — jour 1, il y a 7 jours, aujourd'hui (cadrage aligné sur le visage).");
+  L.push("","## 7. Variables en cours",`kcal ${G.kcal} · protéines ${G.p} · glucides ${G.g} · lipides ${G.l} · pas ${stepsGoal()} · tour de taille cible ${goals.waist||77} cm`);
+  return L.join("\n");
+}
+async function buildCollage(){
+  const cv=$("#rpCanvas"); const today=iso(new Date()), wkAgo=iso(addDays(new Date(),-7));
+  const cols=[["Jour 1",k=>firstPhoto(k)],["Il y a 7 j",k=>nearestPhoto(k,wkAgo)],["Aujourd'hui",k=>nearestPhoto(k,today)]];
+  const TW=420, TH=560, FH=420, PAD=8, HEAD=44;
+  cv.width=TW*3+PAD*4; cv.height=HEAD+TH+FH+PAD*3; const g=cv.getContext("2d");
+  g.fillStyle="#111315"; g.fillRect(0,0,cv.width,cv.height);
+  const load=u=>new Promise(res=>{ const i=new Image(); i.crossOrigin="anonymous"; i.onload=()=>res(i); i.onerror=()=>res(null); i.src=u; });
+  for (let c=0;c<3;c++){
+    const [lab,fn]=cols[c]; const x=PAD+c*(TW+PAD);
+    g.fillStyle="#F0C233"; g.font="600 22px system-ui, sans-serif"; g.fillText(lab, x, 30);
+    for (const [kind,y,h] of [["body",HEAD,TH],["face",HEAD+TH+PAD,FH]]){
+      const p=fn(kind); g.fillStyle="#000"; g.fillRect(x,y,TW,h); if (!p) continue;
+      if (kind==="body"){ g.fillStyle="#cfd3d6"; g.font="16px system-ui"; g.fillText(dfmt(p.date,{day:"numeric",month:"short"}), x+8, y+h-10); }
+      const im=await load(src(p)); if (!im) continue; const f=frameOf(p); const H=h, W=TW, A=W/H;
+      const dh=H/f.s, dw=dh*p.w/p.h; g.save(); g.beginPath(); g.rect(x,y,W,H); g.clip();
+      g.drawImage(im, x+W/2-f.cx*dw, y+H/2-f.cy*dh, dw, dh); g.restore();
+      g.fillStyle="rgba(0,0,0,.55)"; g.fillRect(x,y+h-30,120,30); g.fillStyle="#fff"; g.font="15px system-ui"; g.fillText(dfmt(p.date,{day:"numeric",month:"short"}), x+8, y+h-10);
+    }
+  }
+  return new Promise(res=>{ try{ cv.toBlob(b=>res(b),"image/jpeg",.85); }catch{ res(null); } });
+}
+let rpText="", rpBlob=null;
+async function renderRapport(){
+  rpText=buildReport(); $("#rpText").textContent=rpText;
+  $("#rpWhen").textContent="Ce rapport rassemble les 7 derniers jours. Envoie-le le jeudi, après avoir saisi tes mensurations.";
+  rpBlob=null; rpBlob=await buildCollage();
+}
+async function copyText(){ try{ await navigator.clipboard.writeText(rpText); toast("Rapport copié"); }catch{ const r=document.createRange(); r.selectNodeContents($("#rpText")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("Texte sélectionné : copie-le"); } }
+$("#rpCopy").onclick=copyText;
+$("#rpImg").onclick=async()=>{ if (!rpBlob) rpBlob=await buildCollage(); if (!rpBlob) return toast("Planche indisponible."); const file=new File([rpBlob],`transfo-${iso(new Date())}.jpg`,{type:"image/jpeg"});
+  try{ if (navigator.canShare?.({files:[file]})) await navigator.share({files:[file]}); else { const a=document.createElement("a"); a.href=URL.createObjectURL(rpBlob); a.download=file.name; a.click(); } }catch{} };
+$("#rpShare").onclick=async()=>{ if (!rpBlob) rpBlob=await buildCollage(); const files=rpBlob?[new File([rpBlob],`transfo-${iso(new Date())}.jpg`,{type:"image/jpeg"})]:[];
+  try{ if (navigator.share && (!files.length || navigator.canShare?.({files,text:rpText}))) { await copyText(); await navigator.share({text:rpText, files}); } else { await copyText(); toast("Rapport copié : colle-le dans la conversation du coach, puis partage la planche."); } }catch{} };
+$("#rpApply").onclick=async()=>{
+  const t=$("#rpPaste").value; const blk=(t.match(/VARIABLES[\s\S]*$/i)||[t])[0];
+  const get=re=>{ const m=blk.match(re); return m? +m[1].replace(/\s/g,"").replace(",",".") : NaN; };
+  const v={kcal:get(/kcal\s*[:=]\s*([\d\s.,]+)/i), p:get(/prot[ée]ines?\s*[:=]\s*([\d\s.,]+)/i), g:get(/glucides?\s*[:=]\s*([\d\s.,]+)/i), l:get(/lipides?\s*[:=]\s*([\d\s.,]+)/i), steps:get(/pas\s*[:=]\s*([\d\s.,]+)/i), waist:get(/(?:taille|tour de taille)[^:=\n]*[:=]\s*([\d\s.,]+)/i)};
+  const c=cfg(); const tg={...T()}; const ch=[];
+  for (const k of ["kcal","p","g","l"]) if (isFinite(v[k])&&v[k]>0 && v[k]!==tg[k]){ ch.push(`${k==="kcal"?"kcal":k==="p"?"protéines":k==="g"?"glucides":"lipides"} ${tg[k]} → ${v[k]}`); tg[k]=v[k]; }
+  const ng={...goals}; if (isFinite(v.steps)&&v.steps>0&&v.steps!==stepsGoal()){ ch.push(`pas ${stepsGoal()} → ${v.steps}`); ng.steps=v.steps; } if (isFinite(v.waist)&&v.waist>50&&v.waist!==goals.waist){ ch.push(`tour de taille cible ${goals.waist} → ${v.waist}`); ng.waist=v.waist; }
+  if (!ch.length){ $("#rpApplied").textContent="Aucune nouvelle valeur trouvée dans le texte collé."; return; }
+  c.targets=tg; nCfg=c; saveCfg(); goals=ng; try{ await db.doc("settings/goals").set(goals); }catch{}
+  const host=$("#nTgtForm"); if (host) host.dataset.done="";
+  $("#rpApplied").textContent="Appliqué : "+ch.join(" · "); toast("Nouvelles variables appliquées");
+};
 buildForm(); buildTForm(); setKindUI();
 function setKindUI(){ $("#kBody").setAttribute("aria-pressed",kind==="body"); $("#kFace").setAttribute("aria-pressed",kind==="face"); }
 loadWeek(curWeek); route();
@@ -2092,6 +2231,7 @@ else {
     db.collection("tanita").onSnapshot(s=>{ tanitas=s.docs.map(d=>d.data()).filter(t=>t&&t.date).sort((a,b)=>a.date<b.date?-1:1); if (current==="tanita") renderTanita(); }, ()=>{});
     db.doc("nutrition/config").onSnapshot(s=>{ if (s.exists) nCfg={...clone(DEF_CFG), ...s.data()}; if (current==="nutrition" && !nStack.length) renderNutrition(); }, ()=>{});
     db.collection("nlog").onSnapshot(s=>{ s.docs.forEach(d=>{ const x=d.data(); if (x&&x.date) nLog[d.id]=x; }); nLoaded=true; if (current==="nutrition" && !nStack.length) renderNutrition(); }, ()=>{});
+    db.collection("steps").onSnapshot(s=>{ s.docs.forEach(d=>{ const x=d.data(); if (x&&x.date) steps[d.id]=x; }); }, ()=>{});
     db.collection("weighins").onSnapshot(s=>{ s.docs.forEach(d=>{ const x=d.data(); if (x&&x.date) weighins[d.id]=x; }); if (current==="courbes") renderCourbes(); }, ()=>{});
     db.doc("settings/goals").onSnapshot(s=>{ if (s.exists) goals={...goals,...s.data()}; }, ()=>{});
     db.collection("foods").onSnapshot(s=>{ nFoods=s.docs.map(d=>d.data()).filter(f=>f&&f.n); }, ()=>{});
