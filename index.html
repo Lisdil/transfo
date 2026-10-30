@@ -2214,7 +2214,6 @@ $("#rpApply").onclick=async()=>{
   $("#rpApplied").textContent="Appliqué : "+ch.join(" · "); toast("Nouvelles variables appliquées");
 };
 ["gesturestart","gesturechange"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
-let lastTouchEnd=0; document.addEventListener("touchend",e=>{ const now=Date.now(); if (now-lastTouchEnd<350 && !e.target.closest("input,textarea,select")) e.preventDefault(); lastTouchEnd=now; },{passive:false});
 buildForm(); buildTForm(); setKindUI();
 function setKindUI(){ $("#kBody").setAttribute("aria-pressed",kind==="body"); $("#kFace").setAttribute("aria-pressed",kind==="face"); }
 loadWeek(curWeek); route();
