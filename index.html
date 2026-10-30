@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr"><head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -55,6 +55,9 @@ html.needs-login #login{display:flex;min-height:100vh;align-items:center;justify
   --stage:#000; --scrim:rgba(0,0,0,.75); color-scheme:dark }
 
 *{box-sizing:border-box}
+/* pas de zoom au double-toucher ni au focus d'un champ (iOS zoome si le texte fait moins de 16 px) */
+html,body,button,a,input,select,textarea,label,.stage,.tbtn,.mt,.ct,.opt{touch-action:manipulation}
+input,select,textarea{font-size:max(16px,1em)}
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
@@ -2210,6 +2213,8 @@ $("#rpApply").onclick=async()=>{
   const host=$("#nTgtForm"); if (host) host.dataset.done="";
   $("#rpApplied").textContent="Appliqué : "+ch.join(" · "); toast("Nouvelles variables appliquées");
 };
+["gesturestart","gesturechange"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+let lastTouchEnd=0; document.addEventListener("touchend",e=>{ const now=Date.now(); if (now-lastTouchEnd<350 && !e.target.closest("input,textarea,select")) e.preventDefault(); lastTouchEnd=now; },{passive:false});
 buildForm(); buildTForm(); setKindUI();
 function setKindUI(){ $("#kBody").setAttribute("aria-pressed",kind==="body"); $("#kFace").setAttribute("aria-pressed",kind==="face"); }
 loadWeek(curWeek); route();
