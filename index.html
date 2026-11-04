@@ -59,7 +59,9 @@ html.needs-login #login{display:flex;min-height:100vh;align-items:center;justify
 html,body,button,a,input,select,textarea,label,.stage,.tbtn,.mt,.ct,.opt{touch-action:manipulation}
 input,select,textarea{font-size:max(16px,1em)}
 [hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
+body{overscroll-behavior-y:none}
+nav.tabs.kb{visibility:hidden}
 body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 @media (min-width:680px){body{padding-bottom:40px}}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -197,13 +199,13 @@ td.note{text-align:left;color:var(--muted);white-space:normal;min-width:160px}
 .overlay{position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .ed{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
 @media (max-width:679px){.ed{grid-template-columns:1fr}}
-.ed .stage{max-width:none;touch-action:none;cursor:grab}
+.ed .stage{max-width:none;touch-action:none;cursor:grab;margin-inline:auto}
+.overlay{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .ed .stage .ghost{opacity:.35;mix-blend-mode:normal}
 .guides{position:absolute;inset:0;pointer-events:none}
 .guides i{position:absolute;background:rgba(255,255,255,.45)}
 .guides i.g{left:0;right:0;height:0;background:none;border-top:1.5px dashed rgba(120,220,255,.9)}
 .guides i.g span{position:absolute;right:6px;top:-20px;font:600 11px/1 var(--f-body,system-ui);color:#fff;background:rgba(0,0,0,.45);padding:3px 6px;border-radius:5px;font-style:normal}
-.stage img.sil{mix-blend-mode:normal}
 .marks{position:absolute;inset:0;pointer-events:none}
 .marks b{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2px solid #fff;background:rgba(120,220,255,.85);box-shadow:0 0 0 2px rgba(0,0,0,.35)}
 #edMark.on{background:var(--tape);border-color:var(--tape)}
@@ -791,17 +793,14 @@ a.btn{text-decoration:none;color:var(--fg)}
       <div class="stage" id="edStage">
         <img id="edGhost" class="ghost" alt="">
         <img id="edImg" alt="">
-        <img id="edSil" class="sil" alt="" hidden>
         <div class="guides" id="edGuides"></div>
         <div class="marks" id="edMarks"></div>
       </div>
-      <p class="sub" id="edHelp">Fais glisser pour déplacer, pince ou utilise le zoom. Cale ta silhouette sur le contour du jour 1, tes yeux et ton nombril sur les repères.</p>
+      <p class="sub" id="edHelp">Touche « Placer yeux et nombril », ou fais glisser et pince pour caler tes yeux et ton nombril sur les lignes.</p>
     </div>
     <div class="edside">
       <label>Zoom <input type="range" id="edZoom" min="0" max="100" value="50"></label>
       <button class="btn primary" id="edMark">Placer yeux et nombril</button>
-      <label>Repère d'alignement <select id="edRef"><option value="sil">Silhouette du jour 1</option><option value="j1">Photo du jour 1 en transparence</option><option value="veille">Photo précédente en transparence</option><option value="none">Aucun</option></select></label>
-      <label>Opacité du repère <input type="range" id="edGhostOp" min="0" max="100" value="60"></label>
       <label>Date de la photo <input type="date" id="edDate"></label>
       <label>Type <select id="edKind"><option value="body">Corps</option><option value="face">Visage</option></select></label>
       <label style="flex-direction:row;align-items:center;gap:8px;color:var(--fg)"><input type="checkbox" id="edPick"> Photo retenue pour ce jour</label>
@@ -876,6 +875,12 @@ const num = s => { if (s==null) return NaN; const v=parseFloat(String(s).replace
 const daysBetween = (a,b) => Math.round((parseISO(b)-parseISO(a))/864e5);
 const esc = s => String(s??"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function deltaClass(k, d){ const g=MK[k]?.goal||0; if (!d || Math.abs(d)<0.05) return "flat"; if (!g) return "flat"; return d*g>0?"good":"bad"; }
+/* Barre du bas : iOS décale parfois l'écran après le clavier ou un rebond ; on la recale sur la zone visible */
+(()=>{ const vv=window.visualViewport; const nav=document.querySelector("nav.tabs"); if (!vv||!nav) return;
+  const mq=matchMedia("(max-width:679px)"); const fix=()=>{ if (!mq.matches){ nav.classList.remove("kb"); nav.style.transform=""; return; } const kb = vv.height < window.innerHeight*0.75; nav.classList.toggle("kb", kb);
+    const off = window.innerHeight - vv.height - vv.offsetTop; nav.style.transform = (!kb && Math.abs(off)>1) ? `translateY(${-off}px)` : ""; };
+  vv.addEventListener("resize", fix); vv.addEventListener("scroll", fix); addEventListener("scroll", fix, {passive:true});
+  addEventListener("focusout", ()=>setTimeout(()=>{ window.scrollTo(window.scrollX, window.scrollY); fix(); },120)); fix(); })();
 let toastT; function toast(msg, undo){ const t=$("#toast"); t.textContent=msg; if (undo){ const b=document.createElement("button"); b.textContent="Annuler"; b.className="tundo"; b.onclick=()=>{ t.hidden=true; undo(); }; t.append(b); } t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true, undo?5000:2600); }
 const store = { get(k){ try{return localStorage.getItem(k);}catch{return null;} }, set(k,v){ try{localStorage.setItem(k,v);}catch{} } };
 
@@ -1307,7 +1312,7 @@ function openEditor(p){
   const k=p.kind;
   ed={p, f:{...frameOf(p)}};
   $("#edStage").style.setProperty("--ar", k==="face"?"4/5":"3/4");
-  $("#edStage").style.maxWidth = k==="face" ? "520px" : "560px";
+  $("#edStage").style.maxWidth = k==="face" ? "min(520px, calc(52svh * 0.8))" : "min(560px, calc(52svh * 0.75))";
   $("#edTitle").textContent="Cadrage · "+dfmt(p.date,{day:"numeric",month:"long"});
   $("#edImg").src=src(p); $("#edDate").value=p.date; $("#edKind").value=k; $("#edPick").checked=!!p.pick;
   // repères : jour 1 (silhouette ou transparence) ou photo précédente
@@ -1316,39 +1321,14 @@ function openEditor(p){
   ed.day1 = list[0] && list[0].date<=p.date ? list[0] : null;
   $("#edPrevF").disabled=!ed.prev; ed.mark=null; $("#edMarks").innerHTML=""; $("#edMark").classList.remove("on"); $("#edMark").textContent=k==="face"?"Placer les yeux":"Placer yeux et nombril";
   $("#edGuides").innerHTML=`<i style="left:50%;top:0;bottom:0;width:1px"></i>`+guideY(k).map(([y,l])=>`<i class="g" style="top:${y*100}%"><span>${l}</span></i>`).join("");
-  $("#edRef").value = ed.day1 ? "sil" : ed.prev ? "veille" : "none";
-  [...$("#edRef").options].forEach(o=>o.disabled = (o.value==="sil"||o.value==="j1") ? !ed.day1 : o.value==="veille" ? !ed.prev : false);
-  setRef();
+  ed.ghost=null; $("#edGhost").hidden=true;
   $("#edAuto").hidden=!sample; $("#edMsg").textContent = p.framedBy==="claude"?"Cadré par Claude.":p.framedBy==="copie"?"Cadrage repris de la photo précédente : vérifie avec la transparence puis enregistre.":p.frame?"Cadré à la main.":"Pas encore cadrée.";
   $("#edDel").textContent="Supprimer la photo"; delArm=false;
   $("#ed").hidden=false; document.body.style.overflow="hidden";
   syncZoom(); requestAnimationFrame(edPlace);
 }
 const guideY=k=> k==="face" ? [[0.43,"yeux"]] : [[0.21,"yeux"],[0.78,"nombril"]];
-function setRef(){ if (!ed) return; const r=$("#edRef").value; ed.ghost = r==="veille" ? ed.prev : (r==="j1"||r==="sil") ? ed.day1 : null;
-  $("#edGhost").hidden = !ed.ghost || r==="sil"; if (ed.ghost && r!=="sil") $("#edGhost").src=src(ed.ghost);
-  $("#edSil").hidden = r!=="sil" || !ed.day1; if (r==="sil" && ed.day1) silhouette(ed.day1); edPlace(); }
-const silCache=new Map();
-async function silhouette(ref){
-  const show=url=>{ if (ed?.ghost===ref){ $("#edSil").src=url; edPlace(); } };
-  if (silCache.has(ref.id)) return show(silCache.get(ref.id));
-  try{
-    const im=new Image(); im.crossOrigin="anonymous"; im.src=src(ref); await im.decode();
-    const sc=Math.min(1, 420/Math.max(im.naturalWidth,im.naturalHeight)); const w=Math.round(im.naturalWidth*sc), h=Math.round(im.naturalHeight*sc);
-    const c=document.createElement("canvas"); c.width=w; c.height=h; const x=c.getContext("2d"); x.filter="blur(1.5px)"; x.drawImage(im,0,0,w,h);
-    const d=x.getImageData(0,0,w,h).data; const g=new Float32Array(w*h); for (let i=0;i<w*h;i++) g[i]=d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11;
-    const m=new Float32Array(w*h); for (let y=1;y<h-1;y++) for (let xx=1;xx<w-1;xx++){ const i=y*w+xx;
-      const gx=-g[i-w-1]-2*g[i-1]-g[i+w-1]+g[i-w+1]+2*g[i+1]+g[i+w+1], gy=-g[i-w-1]-2*g[i-w]-g[i-w+1]+g[i+w-1]+2*g[i+w]+g[i+w+1]; m[i]=Math.hypot(gx,gy); }
-    const sorted=Float32Array.from(m).sort(); const th=Math.max(40, sorted[Math.floor(sorted.length*0.9)]);
-    const o=x.createImageData(w,h); for (let i=0;i<w*h;i++) if (m[i]>=th){ o.data[i*4]=255; o.data[i*4+1]=196; o.data[i*4+2]=64; o.data[i*4+3]=Math.min(255,90+m[i]/th*80); }
-    x.filter="none"; x.clearRect(0,0,w,h); x.putImageData(o,0,0); const url=c.toDataURL("image/png"); silCache.set(ref.id,url); show(url);
-  }catch{ // image non lisible (droits d'accès) : repli sur la transparence
-    if (ed?.ghost===ref){ $("#edRef").value="j1"; setRef(); $("#edMsg").textContent="Contour indisponible pour cette photo : le jour 1 s'affiche en transparence."; } }
-}
-function edPlace(){ if (!ed) return; const st=$("#edStage"); place($("#edImg"),st,ed.p,ed.f); const op=$("#edGhostOp").value/100;
-  if (ed.ghost){ place($("#edGhost"),st,ed.ghost); place($("#edSil"),st,ed.ghost); }
-  $("#edGhost").style.opacity=Math.min(op,.7); $("#edSil").style.opacity=Math.max(.25,op); }
-$("#edRef").addEventListener("change", setRef);
+function edPlace(){ if (!ed) return; place($("#edImg"),$("#edStage"),ed.p,ed.f); }
 $("#edMark").onclick=()=>{ if (!ed) return; if (ed.mark){ ed.mark=null; $("#edMarks").innerHTML=""; $("#edMark").classList.remove("on"); $("#edHelp").textContent="Placement annulé."; return; }
   ed.mark={pts:[]}; $("#edMark").classList.add("on"); $("#edMarks").innerHTML=""; $("#edHelp").textContent="Touche le point entre tes deux yeux."; };
 $("#edStage").parentElement.addEventListener("pointerdown", e=>{
@@ -1368,8 +1348,7 @@ $("#edStage").parentElement.addEventListener("pointerdown", e=>{
 const zToS=z=>Math.pow(2,(50-z)/30)*0.8; const sToZ=s=>50-30*Math.log2(s/0.8);
 function syncZoom(){ $("#edZoom").value=Math.round(sToZ(ed.f.s)); }
 $("#edZoom").addEventListener("input", e=>{ ed.f.s=zToS(+e.target.value); edPlace(); });
-$("#edGhostOp").addEventListener("input", edPlace);
-$("#edImg").addEventListener("load", edPlace); $("#edGhost").addEventListener("load", edPlace); $("#edSil").addEventListener("load", edPlace);
+$("#edImg").addEventListener("load", edPlace); $("#edGhost").addEventListener("load", edPlace);
 (()=>{ const st=$("#edStage"); const pts=new Map(); let base=null;
   st.addEventListener("pointerdown", e=>{ st.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); base=null; });
   st.addEventListener("pointermove", e=>{
