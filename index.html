@@ -512,6 +512,17 @@ a.btn{text-decoration:none;color:var(--fg)}
 .rplan button.done span:first-child::before{content:"✓ ";color:var(--good)}
 .rplan button.skip{opacity:.5;text-decoration:line-through}
 .rplan button span:last-child{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.coachgo{display:flex;flex-direction:column;gap:10px}
+.cmsg{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:6px;font-size:15px;line-height:1.55}
+.cmsg h3,.cmsg h4{margin:10px 0 2px;font-size:16px;text-transform:none;letter-spacing:0;color:var(--fg)} .cmsg p{margin:0} .cmsg ul,.cmsg ol{margin:0;padding-left:20px} .cmsg li{margin:2px 0}
+.cmsg pre{background:var(--sunk);border-radius:10px;padding:10px;font:12.5px/1.5 var(--f-mono);white-space:pre-wrap;margin:4px 0}
+.cmsg table{font-size:13px} .cmsg td,.cmsg th{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left}
+.cq{align-self:flex-end;background:var(--fg);color:var(--bg);border-radius:14px 14px 4px 14px;padding:10px 14px;max-width:85%;white-space:pre-wrap}
+.cthread{display:flex;flex-direction:column;gap:10px}
+.cask{display:flex;gap:8px;align-items:flex-end} .cask textarea{flex:1;min-height:48px}
+.cvars{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border:1.5px solid var(--tape);border-radius:14px;padding:12px}
+.chist summary{cursor:pointer;font-weight:600}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-2px;margin-right:6px} @keyframes sp{to{transform:rotate(360deg)}}
 .rptext{white-space:pre-wrap;font:12.5px/1.5 var(--f-mono);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0;max-height:70vh;overflow:auto}
 .rpcanvas{width:100%;height:auto;border-radius:14px;background:var(--stage)}
 .btns{display:flex;flex-wrap:wrap;gap:8px}
@@ -583,22 +594,37 @@ a.btn{text-decoration:none;color:var(--fg)}
     </div></div>
   </section>
 
-  <!-- RAPPORT COACH -->
+  <!-- COACH -->
   <section class="view" id="v-rapport" hidden>
-    <div class="row"><a class="iconbtn" href="#today" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></a><h2>Rapport pour le coach</h2></div>
-    <p class="sub" id="rpWhen"></p>
+    <div class="row"><a class="iconbtn" href="#today" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></a><h2>Coach</h2></div>
     <div class="duo"><div class="col">
-      <div class="tcard"><span class="k">1 · Envoyer</span>
-        <div class="btns"><button class="btn primary" id="rpShare">Partager rapport + photos</button><button class="btn" id="rpCopy">Copier le texte</button><button class="btn" id="rpImg">Partager la planche photo</button></div>
-        <p class="sub">Dans la conversation de ton coach (projet Claude), colle le texte et joins la planche photo. Sur iPhone, « Partager » ouvre directement l'app Claude.</p>
+      <div class="tcard coachgo"><span class="k">Bilan de la semaine</span>
+        <p class="sub" id="cWhen" style="margin:0"></p>
+        <button class="btn primary bigbtn" id="cRun">Analyser ma semaine</button>
+        <p class="sub" id="cMsg" style="margin:0"></p>
       </div>
-      <div class="tcard"><span class="k">2 · Appliquer les nouvelles variables du coach</span>
-        <textarea id="rpPaste" placeholder="Colle ici la réponse du coach (au moins le bloc VARIABLES)"></textarea>
-        <div class="row"><button class="btn primary" id="rpApply">Appliquer</button><span class="sub" id="rpApplied"></span></div>
-      </div>
-      <canvas id="rpCanvas" class="rpcanvas" aria-label="Planche photo de la semaine"></canvas>
+      <div id="cOut"></div>
+      <div id="cHist"></div>
+      <details class="panel"><summary style="cursor:pointer;font-weight:600">Réglages du coach</summary>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+          <b>Photo objectif</b>
+          <div class="row" style="gap:12px;align-items:center"><img id="cGoalImg" alt="Photo objectif" style="width:84px;height:112px;object-fit:cover;border-radius:10px;background:var(--sunk)" hidden><label class="btn" style="cursor:pointer">Choisir une photo<input type="file" id="cGoalIn" accept="image/*" hidden></label></div>
+          <b>Instructions du coach</b>
+          <textarea id="cPrompt" rows="12" style="font:12.5px/1.5 var(--f-mono)"></textarea>
+          <div class="row"><button class="btn" id="cPromptSave">Enregistrer les instructions</button><button class="btn ghost" id="cPromptReset">Revenir aux instructions d'origine</button></div>
+          <p class="sub">Le coach utilise Claude Opus 5.5 via ta clé API, rangée dans Supabase. Chaque bilan coûte environ 0,10 à 0,20 $.</p>
+        </div>
+      </details>
+      <details class="panel"><summary style="cursor:pointer;font-weight:600">Envoyer au projet Claude (méthode manuelle)</summary>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+          <div class="btns"><button class="btn" id="rpShare">Partager rapport + photos</button><button class="btn" id="rpCopy">Copier le texte</button><button class="btn" id="rpImg">Partager la planche photo</button></div>
+          <textarea id="rpPaste" placeholder="Colle ici la réponse du coach (au moins le bloc VARIABLES)"></textarea>
+          <div class="row"><button class="btn" id="rpApply">Appliquer les variables</button><span class="sub" id="rpApplied"></span></div>
+        </div>
+      </details>
     </div><div class="col">
-      <pre class="rptext" id="rpText"></pre>
+      <canvas id="rpCanvas" class="rpcanvas" aria-label="Planche photo de la semaine"></canvas>
+      <details class="panel"><summary style="cursor:pointer;font-weight:600">Voir le rapport envoyé</summary><pre class="rptext" id="rpText" style="margin-top:10px"></pre></details>
     </div></div>
   </section>
 
@@ -2289,7 +2315,7 @@ function renderStepsCard(){
 function renderCoachCard(){
   const c=$("#tdCoach"); const isThu=new Date().getDay()===4; const mon=iso(monday(new Date())); const saved=!!weeksMap[mon];
   c.className="tcard tlink"+(isThu&&saved?" hot":"");
-  c.innerHTML=`<span class="k">Coach</span><span class="v">${isThu&&saved?"Rapport prêt":"Rapport"}</span><span class="s">${isThu?(saved?"Mesures du jour saisies : envoie ton bilan":"Saisis d'abord tes mesures du jeudi"):"Bilan de la semaine à envoyer le jeudi"}</span><span class="go">Préparer le rapport →</span>`;
+  c.innerHTML=`<span class="k">Coach</span><span class="v">${isThu&&saved?"Rapport prêt":"Rapport"}</span><span class="s">${isThu?(saved?"Mesures du jour saisies : envoie ton bilan":"Saisis d'abord tes mesures du jeudi"):"Bilan de la semaine à envoyer le jeudi"}</span><span class="go">${coachDocs[mon]?"Voir l'analyse du coach →":"Analyser ma semaine →"}</span>`;
 }
 $("#tdCoach").onclick=()=>{ location.hash="rapport"; };
 
@@ -2345,7 +2371,7 @@ async function buildCollage(){
   const TW=420, TH=560, FH=420, PAD=8, HEAD=44;
   cv.width=TW*3+PAD*4; cv.height=HEAD+TH+FH+PAD*3; const g=cv.getContext("2d");
   g.fillStyle="#111315"; g.fillRect(0,0,cv.width,cv.height);
-  const load=u=>new Promise(res=>{ const i=new Image(); i.crossOrigin="anonymous"; i.onload=()=>res(i); i.onerror=()=>res(null); i.src=u; });
+  const load=async u=>{ try{ const r=await fetch(u); if (!r.ok) throw 0; return await createImageBitmap(await r.blob()); }catch{ return new Promise(res=>{ const i=new Image(); i.crossOrigin="anonymous"; i.onload=()=>res(i); i.onerror=()=>res(null); i.src=u; }); } };
   for (let c=0;c<3;c++){
     const [lab,fn]=cols[c]; const x=PAD+c*(TW+PAD);
     g.fillStyle="#F0C233"; g.font="600 22px system-ui, sans-serif"; g.fillText(lab, x, 30);
@@ -2363,8 +2389,7 @@ async function buildCollage(){
 let rpText="", rpBlob=null;
 async function renderRapport(){
   rpText=buildReport(); $("#rpText").textContent=rpText;
-  $("#rpWhen").textContent="Ce rapport rassemble les 7 derniers jours. Envoie-le le jeudi, après avoir saisi tes mensurations.";
-  rpBlob=null; rpBlob=await buildCollage();
+  renderCoach(); rpBlob=null; rpBlob=await buildCollage();
 }
 async function copyText(){ try{ await navigator.clipboard.writeText(rpText); toast("Rapport copié"); }catch{ const r=document.createRange(); r.selectNodeContents($("#rpText")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("Texte sélectionné : copie-le"); } }
 $("#rpCopy").onclick=copyText;
@@ -2372,18 +2397,105 @@ $("#rpImg").onclick=async()=>{ if (!rpBlob) rpBlob=await buildCollage(); if (!rp
   try{ if (navigator.canShare?.({files:[file]})) await navigator.share({files:[file]}); else { const a=document.createElement("a"); a.href=URL.createObjectURL(rpBlob); a.download=file.name; a.click(); } }catch{} };
 $("#rpShare").onclick=async()=>{ if (!rpBlob) rpBlob=await buildCollage(); const files=rpBlob?[new File([rpBlob],`transfo-${iso(new Date())}.jpg`,{type:"image/jpeg"})]:[];
   try{ if (navigator.share && (!files.length || navigator.canShare?.({files,text:rpText}))) { await copyText(); await navigator.share({text:rpText, files}); } else { await copyText(); toast("Rapport copié : colle-le dans la conversation du coach, puis partage la planche."); } }catch{} };
-$("#rpApply").onclick=async()=>{
-  const t=$("#rpPaste").value; const blk=(t.match(/VARIABLES[\s\S]*$/i)||[t])[0];
+function parseVars(t){ const blk=(t.match(/VARIABLES[\s\S]*$/i)||[t])[0];
   const get=re=>{ const m=blk.match(re); return m? +m[1].replace(/\s/g,"").replace(",",".") : NaN; };
-  const v={kcal:get(/kcal\s*[:=]\s*([\d\s.,]+)/i), p:get(/prot[ée]ines?\s*[:=]\s*([\d\s.,]+)/i), g:get(/glucides?\s*[:=]\s*([\d\s.,]+)/i), l:get(/lipides?\s*[:=]\s*([\d\s.,]+)/i), steps:get(/pas\s*[:=]\s*([\d\s.,]+)/i), waist:get(/(?:taille|tour de taille)[^:=\n]*[:=]\s*([\d\s.,]+)/i)};
-  const c=cfg(); const tg={...T()}; const ch=[];
+  return {kcal:get(/kcal\s*[:=]\s*([\d\s.,]+)/i), p:get(/prot[ée]ines?\s*[:=]\s*([\d\s.,]+)/i), g:get(/glucides?\s*[:=]\s*([\d\s.,]+)/i), l:get(/lipides?\s*[:=]\s*([\d\s.,]+)/i), steps:get(/pas\s*[:=]\s*([\d\s.,]+)/i), waist:get(/(?:taille|tour de taille)[^:=\n]*[:=]\s*([\d\s.,]+)/i)}; }
+function varChanges(v){ const tg={...T()}; const ch=[];
   for (const k of ["kcal","p","g","l"]) if (isFinite(v[k])&&v[k]>0 && v[k]!==tg[k]){ ch.push(`${k==="kcal"?"kcal":k==="p"?"protéines":k==="g"?"glucides":"lipides"} ${tg[k]} → ${v[k]}`); tg[k]=v[k]; }
   const ng={...goals}; if (isFinite(v.steps)&&v.steps>0&&v.steps!==stepsGoal()){ ch.push(`pas ${stepsGoal()} → ${v.steps}`); ng.steps=v.steps; } if (isFinite(v.waist)&&v.waist>50&&v.waist!==goals.waist){ ch.push(`tour de taille cible ${goals.waist} → ${v.waist}`); ng.waist=v.waist; }
-  if (!ch.length){ $("#rpApplied").textContent="Aucune nouvelle valeur trouvée dans le texte collé."; return; }
-  c.targets=tg; nCfg=c; saveCfg(); goals=ng; try{ await db.doc("settings/goals").set(goals); }catch{}
-  const host=$("#nTgtForm"); if (host) host.dataset.done="";
-  $("#rpApplied").textContent="Appliqué : "+ch.join(" · "); toast("Nouvelles variables appliquées");
-};
+  return {ch, tg, ng}; }
+async function applyVars(text){ const {ch,tg,ng}=varChanges(parseVars(text)); if (!ch.length) return [];
+  const c=cfg(); c.targets=tg; nCfg=c; saveCfg(); goals=ng; try{ await db.doc("settings/goals").set(goals); }catch{}
+  const host=$("#nTgtForm"); if (host) host.dataset.done=""; toast("Nouvelles variables appliquées"); return ch; }
+$("#rpApply").onclick=async()=>{ const ch=await applyVars($("#rpPaste").value);
+  $("#rpApplied").textContent = ch.length ? "Appliqué : "+ch.join(" · ") : "Aucune nouvelle valeur trouvée dans le texte collé."; };
+
+/* ---------- Coach intégré (Claude Opus via une fonction Supabase) ---------- */
+const DEF_COACH="Tu es mon coach personnel de transformation physique. Tu combines l'expertise d'un préparateur physique et d'un nutritionniste du sport, avec une approche fondée sur les preuves (recomposition, hypertrophie, sèche, gestion de la fatigue). Tu me parles en français, de façon directe, chiffrée et bienveillante. Tu n'es pas médecin : si un signal ressemble à un problème de santé (douleur persistante, perte de poids trop rapide, épuisement), tu me le dis et tu me renvoies vers un professionnel.\n\n## Qui je suis\n(À compléter : sexe, âge, taille, poids actuel et de départ, composition corporelle, tour de taille, historique d'entraînement, particularités ou douleurs à surveiller.)\n\n## Mon objectif à 12 mois\n(À compléter : le physique visé, et la stratégie par phases, par exemple sèche jusqu'à un tour de taille cible, maintenance, puis prise de muscle propre.)\n\n## Mon fonctionnement actuel\n(À compléter : séances par semaine et leur répartition, cardio, suivi nutritionnel et objectifs, pas quotidiens, sommeil, jour et méthode de mesure.)\n\n## Ce que je t'envoie chaque jeudi\nUn rapport généré par mon app (texte), avec une planche photo : corps et visage à la date de référence, il y a 7 jours et aujourd'hui, cadrage aligné sur le visage. Le rapport contient :\n1. mensurations de la semaine, de la semaine précédente et du départ ;\n2. pesées quotidiennes et moyenne ;\n3. pas par jour ;\n4. nutrition jour par jour, avec la maintenance estimée par l'app (apport moyen comparé à la tendance du poids sur 21 jours) ;\n5. séances détaillées, tonnage, records, séries par muscle ;\n6. projection du tour de taille ;\n7. variables en cours ;\n8. mes séances types actuelles (exercices dans l'ordre, séries, répétitions, charges).\n\n## Comment tu analyses\nDans cet ordre :\n1. **Qualité des données.** Jours non saisis, pesées manquantes, changement de méthode de mesure. Signale ce qui fausse la lecture.\n2. **Tendance de fond.** Poids moyen et tour de taille. En sèche, vise une perte de 0,5 à 1 % du poids par semaine et environ 0,5 à 1 cm de taille. Ne réagis jamais à une seule semaine : l'eau, le repas plaisir et le sel brouillent tout. Regarde au moins 2 semaines.\n3. **Performance.** Tonnage par séance, charges et répétitions, records, stagnation ou baisse. En déficit, maintenir les charges est une réussite.\n4. **Volume.** 10 à 20 séries par muscle et par semaine. Repère les déséquilibres. Les jambes ne sont entraînées qu'une fois par semaine, c'est un choix assumé : optimise cette séance-là (exercices, séries, intensité), sans jamais proposer de deuxième séance Jambes.\n5. **Nutrition.** Respect des calories et surtout des protéines (au moins 1,8 g/kg), régularité, repas plaisir, cohérence avec la maintenance estimée.\n6. **Activité.** Moyenne de pas et régularité.\n7. **Photos.** Ce qui a visiblement changé : ventre, taille, épaules, bras, visage. Tiens compte de la lumière, de la posture et de la contraction. Compare à la photo objectif.\n8. **Récupération.** Notes, séances passées, signes de fatigue.\n\n## Règles de décision\n- Un seul levier à la fois, et seulement si la tendance s'écarte de la cible **2 semaines de suite**. Dans l'ordre : pas (+1 000 à 2 000), puis calories (−100 à −150 kcal), en gardant les protéines.\n- Protéines : 1,8 à 2,2 g/kg. Lipides : au moins 0,8 g/kg. Glucides : le reste (calories − 4 × protéines − 9 × lipides, divisé par 4).\n- Stagnation des charges avec fatigue en hausse : propose une semaine plus légère (volume −30 à 40 %) toutes les 6 à 8 semaines, ou une pause à maintenance après 12 semaines de sèche.\n- Perte de plus de 1 % par semaine pendant 2 semaines, ou force qui s'effondre : remonte les calories.\n- Quand j'atteins environ 76-77 cm de tour de taille, propose le passage en maintenance avec un plan de remontée des calories (+100 à 150 kcal par semaine).\n- Propose des ajustements de séance précis (exercice, séries, répétitions, charge cible) plutôt que des généralités.\n\n## Format de ta réponse, chaque semaine\nSois synthétique : phrases courtes, chiffres, pas de remplissage. Le plan est **toujours identique** d'une semaine à l'autre, avec exactement ces titres (emoji compris), dans cet ordre :\n\n## 🧭 Synthèse\n3 lignes maximum : le verdict, l'indicateur (🟢 sur la trajectoire, 🟡 à surveiller, 🔴 à corriger) et LA décision de la semaine.\n\n## 📈 Faisabilité de l'objectif\nPremière ligne exactement sous la forme `FAISABILITÉ: 72/100 (Probable)`. Le score estime la probabilité d'atteindre mon objectif à 12 mois à ce rythme : rythme réel de perte (poids, taille) comparé au rythme requis, régularité (calories, protéines, pas, séances), évolution des charges. Libellés : 80-100 Très probable, 60-79 Probable, 40-59 Serré, 0-39 Peu probable. Puis 2 lignes : date estimée pour atteindre le tour de taille cible, et ce qui ferait monter le score.\n\n## 🔁 Retour sur la semaine dernière\nRelis ton bilan précédent : pour chacune de tes recommandations, dis si elle a été appliquée et si elle a fonctionné (✔︎ / ✘ / ⏳), en une ligne chacune.\n\n## ✅ Ce qui va bien\n3 points maximum, chiffrés.\n\n## ⚠️ Ce qui coince\n3 points maximum, chiffrés.\n\n## 📸 Photos\n3 lignes maximum.\n\n## 🗓️ Plan de la semaine\n- 🍽️ Nutrition : …\n- 🏋️ Entraînement : ajustements exercice par exercice (ordre, séries, répétitions, charge cible).\n- 🚶 Pas : …\n- 😴 Récupération : …\n\n## 🎯 Focus\n3 actions simples maximum.\n\n## ❓ Questions\nSeulement si une information te manque pour décider, 2 questions maximum. Sinon écris « Aucune ».\n\nTermine **toujours** par ce bloc, exactement dans ce format (mon app le lit automatiquement ; garde les valeurs actuelles si rien ne change) :\n\n```\nVARIABLES\nkcal: 2350\nprotéines: 143\nglucides: 287\nlipides: 63\npas: 10000\ntour de taille cible: 77\n```\n\nSi tu modifies une séance (ordre des exercices, séries, répétitions ou charge cible), ajoute juste après un second bloc que mon app applique à mes séances types. Une ligne par exercice : `type | nom exact de l'exercice | séries x répétitions | charge`. Le type est l'identifiant entre crochets dans la section « Séances types actuelles » du rapport (push, pull, jambes, bras…). Reprends le nom exact de l'exercice, la charge dans la même unité que le rapport (kg machine, kg par haltère ou kg par côté), et « = » pour garder la charge actuelle. Pour une séance modifiée, liste ses exercices dans l'ordre voulu : ceux que tu ne cites pas restent après, dans leur ordre actuel. N'ajoute pas ce bloc si rien ne change.\n\n```\nSÉANCES\npush | Développé épaules machine | 3x8 | 45\npush | Développé incliné haltères | 3x10 | =\n```";
+let coachCfg={}, coachDocs={}, coachBusy=false;
+const coachPrompt=()=> (coachCfg.prompt||"").trim() || DEF_COACH;
+const coachWeek=()=>iso(monday(new Date()));
+function mdHTML(t){
+  const out=[]; let list=null, code=null, tbl=null;
+  const inl=x=>esc(x).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g,"$1<i>$2</i>").replace(/`([^`]+)`/g,"<code>$1</code>");
+  const flush=()=>{ if (list){ out.push(`<${list.t}>${list.items.map(i=>`<li>${i}</li>`).join("")}</${list.t}>`); list=null; } if (tbl){ out.push(`<table>${tbl.map((r,i)=>`<tr>${r.map(c=>i?`<td>${inl(c)}</td>`:`<th>${inl(c)}</th>`).join("")}</tr>`).join("")}</table>`); tbl=null; } };
+  for (const line of String(t).split("\n")){
+    if (code){ if (/^```/.test(line)){ out.push(`<pre>${esc(code.join("\n"))}</pre>`); code=null; } else code.push(line); continue; }
+    if (/^```/.test(line)){ flush(); code=[]; continue; }
+    const h=line.match(/^(#{1,4})\s+(.*)/); if (h){ flush(); out.push(`<h3>${inl(h[2])}</h3>`); continue; }
+    if (/^\s*\|.*\|\s*$/.test(line)){ if (list) flush(); if (/^\s*\|[\s:|-]+\|\s*$/.test(line)) continue; (tbl ||= []).push(line.trim().slice(1,-1).split("|").map(c=>c.trim())); continue; }
+    const li=line.match(/^\s*(?:[-*•]|(\d+)[.)])\s+(.*)/); if (li){ if (tbl) flush(); const t2=li[1]?"ol":"ul"; if (!list||list.t!==t2){ flush(); list={t:t2,items:[]}; } list.items.push(inl(li[2])); continue; }
+    flush(); if (line.trim()) out.push(`<p>${inl(line)}</p>`);
+  }
+  if (code) out.push(`<pre>${esc(code.join("\n"))}</pre>`); flush(); return out.join("");
+}
+const blobB64=b=>new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=()=>res(null); r.readAsDataURL(b); });
+async function shrink(blob, max=1100){ try{ const bm=await createImageBitmap(blob); const k=Math.min(1,max/Math.max(bm.width,bm.height)); const c=document.createElement("canvas"); c.width=Math.round(bm.width*k); c.height=Math.round(bm.height*k); c.getContext("2d").drawImage(bm,0,0,c.width,c.height); return await new Promise(r=>c.toBlob(r,"image/jpeg",.85)); }catch{ return null; } }
+async function goalB64(){ if (!coachCfg.goalAsset) return null; const u=window.__blobs?.url(coachCfg.goalAsset); if (!u) return null; try{ const b=await (await fetch(u)).blob(); const s2=await shrink(b); return s2? await blobB64(s2) : null; }catch{ return null; } }
+async function callCoach(messages){
+  const sbc=window.transfoAuth?.sb; if (!sbc) throw new Error("Coach indisponible dans cette version.");
+  const {data,error}=await sbc.functions.invoke("coach",{body:{system:coachPrompt(), messages}});
+  if (error){ let m=error.message; try{ const j=await error.context?.json?.(); if (j?.error) m=j.error; }catch{} throw new Error(m); }
+  if (data?.error) throw new Error(data.error); return data; }
+const costOf=u=>u? (u.input_tokens||0)*4e-6+(u.output_tokens||0)*20e-6 : 0;
+function coachErr(e){ const m=String(e?.message||e);
+  if (/Failed to send|fetch|network/i.test(m)) return "Impossible de joindre le coach. Vérifie ta connexion, ou que la fonction « coach » est bien déployée dans Supabase.";
+  if (/not found|404/i.test(m)) return "La fonction « coach » n'existe pas encore dans Supabase.";
+  if (/credit|billing|balance/i.test(m)) return "Crédits API épuisés ou limite de dépense atteinte (console Claude).";
+  if (/api.key|x-api-key|authentication_error/i.test(m)) return "Clé API refusée : vérifie le secret ANTHROPIC_API_KEY dans Supabase.";
+  return "Le coach n'a pas pu répondre : "+m; }
+async function runCoach(){
+  if (coachBusy) return; coachBusy=true; const btn=$("#cRun"); btn.disabled=true;
+  $("#cMsg").innerHTML=`<span class="spin"></span>Le coach analyse ta semaine… (30 s à 1 min 30)`;
+  try{
+    const report=buildReport(); rpText=report; $("#rpText").textContent=report;
+    if (!rpBlob) rpBlob=await buildCollage();
+    const content=[]; const wk=coachWeek();
+    const past=Object.values(coachDocs).filter(d=>d.week<wk && d.thread?.[1]).sort((a,b)=>a.week.localeCompare(b.week)).slice(-6);
+    if (past.length) content.push({type:"text", text:"# TES ANALYSES DES SEMAINES PRÉCÉDENTES\n\n"+past.map(d=>`## Semaine du ${dfmt(d.week,{day:"numeric",month:"long"})}\n${d.thread[1].text}`).join("\n\n")});
+    const col=rpBlob? await blobB64(rpBlob) : null;
+    if (col){ content.push({type:"text",text:"Planche photo de la semaine (corps en haut, visage en bas ; jour 1, il y a 7 jours, aujourd'hui) :"}); content.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:col}}); }
+    const g=await goalB64(); if (g){ content.push({type:"text",text:"Photo objectif à 12 mois :"}); content.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:g}}); }
+    content.push({type:"text", text:report});
+    const r=await callCoach([{role:"user",content}]);
+    const doc={week:wk, createdAt:new Date().toISOString(), thread:[{role:"user",text:report},{role:"assistant",text:r.text}], cost:costOf(r.usage)};
+    coachDocs[wk]=doc; await db.doc("coach/"+wk).set(doc); $("#cMsg").textContent=""; renderCoach();
+  }catch(e){ $("#cMsg").textContent=coachErr(e); }
+  finally{ coachBusy=false; btn.disabled=false; }
+}
+async function askCoach(wk, q){
+  const d=coachDocs[wk]; if (!d||coachBusy||!q.trim()) return; coachBusy=true;
+  d.thread.push({role:"user",text:q.trim()}); renderCoach(); $("#cAskMsg").innerHTML=`<span class="spin"></span>Le coach réfléchit…`;
+  try{
+    const msgs=d.thread.map((m,i)=>({role:m.role, content: i===0 ? "(Les photos de la semaine ont déjà été analysées dans ta première réponse.)\n\n"+m.text : m.text}));
+    const r=await callCoach(msgs); d.thread.push({role:"assistant",text:r.text}); d.cost=(d.cost||0)+costOf(r.usage);
+    await db.doc("coach/"+wk).set(d);
+  }catch(e){ d.thread.pop(); toast(coachErr(e)); $("#cAskQ") && ($("#cAskQ").value=q); }
+  finally{ coachBusy=false; renderCoach(); }
+}
+function threadHTML(d, live){
+  const parts=d.thread.slice(1).map((m,i)=> m.role==="assistant" ? `<div class="cmsg">${mdHTML(m.text)}</div>` : `<div class="cq">${esc(m.text)}</div>`).join("");
+  const last=[...d.thread].reverse().find(m=>m.role==="assistant"); const ch=last? varChanges(parseVars(last.text)).ch : [];
+  const vars = last && /VARIABLES/i.test(last.text) ? `<div class="cvars">${ch.length?`<span><b>Nouvelles variables :</b> ${esc(ch.join(" · "))}</span><button class="btn primary" data-capply="${d.week}">Appliquer</button>`:`<span class="sub">Variables inchangées ou déjà appliquées.</span>`}</div>` : "";
+  return `<div class="cthread">${parts}${vars}${live?`<div class="cask"><textarea id="cAskQ" placeholder="Une question pour le coach ? (séance, repas, fatigue…)"></textarea><button class="btn primary" id="cAskGo" data-wk="${d.week}">Envoyer</button></div><p class="sub" id="cAskMsg"></p>`:""}<span class="sub">Coût ≈ ${nf(d.cost||0,2)} $</span></div>`;
+}
+function renderCoach(){
+  const wk=coachWeek(), d=coachDocs[wk]; const isThu=new Date().getDay()===4; const saved=!!weeksMap[wk];
+  $("#cWhen").textContent = d ? `Analyse faite le ${dfmt(d.createdAt.slice(0,10),{weekday:"long",day:"numeric",month:"long"})}. Tu peux la relancer après avoir complété tes données.` : saved ? "Tes mesures de la semaine sont saisies : le coach peut analyser les 7 derniers jours." : (isThu?"Saisis d'abord tes mesures du jeudi pour un bilan complet.":"Le bilan se fait le jeudi, après tes mesures. Tu peux le lancer quand tu veux.");
+  $("#cRun").textContent = d ? "Relancer l'analyse" : "Analyser ma semaine";
+  $("#cOut").innerHTML = d ? threadHTML(d,true) : "";
+  const hist=Object.values(coachDocs).filter(x=>x.week<wk && x.thread?.[1]).sort((a,b)=>b.week.localeCompare(a.week));
+  $("#cHist").innerHTML = hist.length ? `<h3>Bilans précédents</h3>`+hist.map(x=>`<details class="panel chist"><summary>Semaine du ${dfmt(x.week,{day:"numeric",month:"long"})}</summary><div style="margin-top:10px">${threadHTML(x,false)}</div></details>`).join("") : "";
+  $("#cPrompt").value = coachPrompt();
+  const gi=$("#cGoalImg"); const u=coachCfg.goalAsset && window.__blobs?.url(coachCfg.goalAsset); gi.hidden=!u; if (u) gi.src=u;
+}
+$("#cRun").onclick=runCoach;
+$("#v-rapport").addEventListener("click", async e=>{ const b=e.target.closest("button"); if (!b) return;
+  if (b.dataset.capply){ const d=coachDocs[b.dataset.capply]; const last=[...d.thread].reverse().find(m=>m.role==="assistant"); const ch=await applyVars(last.text); if (ch.length) toast("Appliqué : "+ch.join(" · ")); renderCoach(); }
+  if (b.id==="cAskGo"){ askCoach(b.dataset.wk, $("#cAskQ").value); } });
+$("#cPromptSave").onclick=async()=>{ coachCfg={...coachCfg, prompt:$("#cPrompt").value}; try{ await db.doc("settings/coach").set(coachCfg); toast("Instructions enregistrées"); }catch{ toast("Enregistrement impossible."); } };
+$("#cPromptReset").onclick=async()=>{ coachCfg={...coachCfg, prompt:""}; $("#cPrompt").value=DEF_COACH; try{ await db.doc("settings/coach").set(coachCfg); toast("Instructions d'origine rétablies"); }catch{} };
+$("#cGoalIn").onchange=async e=>{ const f=e.target.files?.[0]; if (!f||!assets) return; try{ const b=await shrink(f,1600)||f; const a=await assets.upload(b,{type:"image/jpeg"}); coachCfg={...coachCfg, goalAsset:a.id}; await db.doc("settings/coach").set(coachCfg); toast("Photo objectif enregistrée"); renderCoach(); }catch{ toast("Envoi de la photo impossible."); } e.target.value=""; };
 ["gesturestart","gesturechange"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
 buildForm(); buildTForm(); setKindUI();
 function setKindUI(){ $("#kBody").setAttribute("aria-pressed",kind==="body"); $("#kFace").setAttribute("aria-pressed",kind==="face"); }
@@ -2408,6 +2520,8 @@ else {
     db.collection("nlog").onSnapshot(s=>{ s.docs.forEach(d=>{ const x=d.data(); if (x&&x.date) nLog[d.id]=x; }); nLoaded=true; if (current==="nutrition" && !nStack.length) renderNutrition(); }, ()=>{});
     db.collection("steps").onSnapshot(s=>{ s.docs.forEach(d=>{ const x=d.data(); if (x&&x.date) steps[d.id]=x; }); }, ()=>{});
     db.collection("weighins").onSnapshot(s=>{ s.docs.forEach(d=>{ const x=d.data(); if (x&&x.date) weighins[d.id]=x; }); if (current==="courbes") renderCourbes(); }, ()=>{});
+    db.doc("settings/coach").onSnapshot(s=>{ if (s.exists) coachCfg=s.data()||{}; if (current==="rapport") renderCoach(); }, ()=>{});
+    db.collection("coach").onSnapshot(s=>{ coachDocs={}; s.docs.forEach(d=>{ const x=d.data(); if (x?.week) coachDocs[x.week]=x; }); if (current==="rapport" && !coachBusy) renderCoach(); }, ()=>{});
     db.doc("settings/goals").onSnapshot(s=>{ if (s.exists) goals={...goals,...s.data()}; }, ()=>{});
     db.collection("foods").onSnapshot(s=>{ nFoods=s.docs.map(d=>d.data()).filter(f=>f&&f.n); }, ()=>{});
     db.collection("templates").onSnapshot(s=>{ templates={}; s.docs.forEach(d=>{ const t=d.data(); if (t&&Array.isArray(t.slots)) templates[d.id]=t; }); if (current==="seances" && !draft) renderSeances(); }, ()=>{});

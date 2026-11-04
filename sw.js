@@ -1,5 +1,5 @@
 /* Service worker : l'app fonctionne sans réseau (salle de sport) */
-const C="transfo-v4";
+const C="transfo-v5";
 const SHELL=["./","index.html","config.js","shim.js","import.js","manifest.webmanifest","icon-180.png","icon-192.png","icon-512.png","ciqual.json"];
 self.addEventListener("install", e=>{ self.skipWaiting(); e.waitUntil(caches.open(C).then(c=>c.addAll(SHELL)).catch(()=>{})); });
 self.addEventListener("activate", e=>e.waitUntil((async()=>{ for (const k of await caches.keys()) if (k!==C) await caches.delete(k); await self.clients.claim(); })()));
