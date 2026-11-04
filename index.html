@@ -200,7 +200,13 @@ td.note{text-align:left;color:var(--muted);white-space:normal;min-width:160px}
 .ed .stage{max-width:none;touch-action:none;cursor:grab}
 .ed .stage .ghost{opacity:.35;mix-blend-mode:normal}
 .guides{position:absolute;inset:0;pointer-events:none}
-.guides i{position:absolute;background:rgba(255,255,255,.35)}
+.guides i{position:absolute;background:rgba(255,255,255,.45)}
+.guides i.g{left:0;right:0;height:0;background:none;border-top:1.5px dashed rgba(120,220,255,.9)}
+.guides i.g span{position:absolute;right:6px;top:-20px;font:600 11px/1 var(--f-body,system-ui);color:#fff;background:rgba(0,0,0,.45);padding:3px 6px;border-radius:5px;font-style:normal}
+.stage img.sil{mix-blend-mode:normal}
+.marks{position:absolute;inset:0;pointer-events:none}
+.marks b{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2px solid #fff;background:rgba(120,220,255,.85);box-shadow:0 0 0 2px rgba(0,0,0,.35)}
+#edMark.on{background:var(--tape);border-color:var(--tape)}
 .edside{display:flex;flex-direction:column;gap:12px}
 .edside label{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 .edside input[type=range]{accent-color:var(--tape)}
@@ -507,6 +513,23 @@ a.btn{text-decoration:none;color:var(--fg)}
 .rptext{white-space:pre-wrap;font:12.5px/1.5 var(--f-mono);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0;max-height:70vh;overflow:auto}
 .rpcanvas{width:100%;height:auto;border-radius:14px;background:var(--stage)}
 .btns{display:flex;flex-wrap:wrap;gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:9px 14px;min-height:40px;font:inherit;font-size:14px}
+.chips button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+#sLibre{display:flex;flex-direction:column;gap:10px}#sLibre[hidden]{display:none}
+.tbtn.libre{border-style:dashed;background:transparent}
+.cextra{grid-column:2 / -1;display:grid;grid-template-columns:110px minmax(0,1fr);gap:6px}
+.cextra input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;min-width:0}
+#exRes{display:flex;flex-direction:column;gap:10px}
+.tundo{margin-left:12px;background:none;border:0;color:inherit;font-weight:700;text-decoration:underline;padding:4px}
+.favs{display:flex;flex-wrap:wrap;gap:8px}
+.fav{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 6px 8px 14px;min-height:44px}
+.fav b{font-weight:600}.fav small{color:var(--muted)}
+.fav .more{border:0;background:none;color:var(--muted);padding:4px 8px;font-size:18px;line-height:1}
+.nsearch{display:flex;align-items:center;gap:10px;width:100%;border:1.5px solid var(--fg);background:var(--surface);border-radius:14px;padding:14px 16px;font-size:16px;font-weight:600;text-align:left;min-height:56px}
+.rline{display:grid;grid-template-columns:minmax(0,1fr) 90px 36px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.rline input,.rform input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;min-width:0;width:100%}
+.rform{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:500;z-index:60;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -583,6 +606,7 @@ a.btn{text-decoration:none;color:var(--fg)}
       <div class="row"><h2>Séances</h2><span class="spacer"></span><span class="sub" id="sWeek"></span></div>
       <div class="duo"><div class="col">
       <div class="types" id="sTypes"></div>
+      <div class="panel" id="sLibre" hidden></div>
       <div class="grp panel" id="calBox">
         <div class="row"><h3 id="calTitle" style="color:var(--fg);font-size:14px"></h3><span class="spacer"></span><button class="iconbtn" id="calPrev" aria-label="Mois précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button><button class="iconbtn" id="calNext" aria-label="Mois suivant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button></div>
         <div class="cal" id="cal"></div>
@@ -635,7 +659,7 @@ a.btn{text-decoration:none;color:var(--fg)}
       <div class="streaks" id="nStreaks"></div>
       </div><div class="col">
       <div class="tiles4" id="nTiles"></div>
-      <div class="row"><button class="btn ghost" id="nLibre">+ Repas libre (kcal estimées)</button></div>
+      <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn ghost" id="nRecipes">Mes recettes</button><button class="btn ghost" id="nFavs">Mes repas favoris</button><button class="btn ghost" id="nLibre">+ Repas libre (kcal estimées)</button></div>
       <div class="grp" id="nLibres"></div>
       <div class="grp">
         <div class="row"><h3>Calories des 14 derniers jours</h3><span class="spacer"></span><span class="sub" id="nAvg"></span></div>
@@ -767,13 +791,17 @@ a.btn{text-decoration:none;color:var(--fg)}
       <div class="stage" id="edStage">
         <img id="edGhost" class="ghost" alt="">
         <img id="edImg" alt="">
-        <div class="guides"><i style="left:50%;top:0;bottom:0;width:1px"></i><i style="top:50%;left:0;right:0;height:1px"></i><i style="top:5%;left:0;right:0;height:1px"></i><i style="bottom:5%;left:0;right:0;height:1px"></i></div>
+        <img id="edSil" class="sil" alt="" hidden>
+        <div class="guides" id="edGuides"></div>
+        <div class="marks" id="edMarks"></div>
       </div>
-      <p class="sub">Fais glisser pour déplacer. Pince ou utilise le zoom. La photo de la veille apparaît en transparence pour aligner.</p>
+      <p class="sub" id="edHelp">Fais glisser pour déplacer, pince ou utilise le zoom. Cale ta silhouette sur le contour du jour 1, tes yeux et ton nombril sur les repères.</p>
     </div>
     <div class="edside">
       <label>Zoom <input type="range" id="edZoom" min="0" max="100" value="50"></label>
-      <label>Transparence de la veille <input type="range" id="edGhostOp" min="0" max="70" value="35"></label>
+      <button class="btn primary" id="edMark">Placer yeux et nombril</button>
+      <label>Repère d'alignement <select id="edRef"><option value="sil">Silhouette du jour 1</option><option value="j1">Photo du jour 1 en transparence</option><option value="veille">Photo précédente en transparence</option><option value="none">Aucun</option></select></label>
+      <label>Opacité du repère <input type="range" id="edGhostOp" min="0" max="100" value="60"></label>
       <label>Date de la photo <input type="date" id="edDate"></label>
       <label>Type <select id="edKind"><option value="body">Corps</option><option value="face">Visage</option></select></label>
       <label style="flex-direction:row;align-items:center;gap:8px;color:var(--fg)"><input type="checkbox" id="edPick"> Photo retenue pour ce jour</label>
@@ -785,6 +813,13 @@ a.btn{text-decoration:none;color:var(--fg)}
       <p class="sub" id="edMsg"></p>
       <div class="btns"><button class="btn primary" id="edSave">Enregistrer</button><button class="btn ghost danger" id="edDel">Supprimer la photo</button></div>
     </div>
+  </div>
+</div>
+<div class="overlay" id="exPick" hidden>
+  <div style="max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:12px">
+    <div class="row"><h2>Ajouter un exercice</h2><span class="spacer"></span><button class="btn" id="exClose">Fermer</button></div>
+    <input id="exQ" type="search" class="exsel" placeholder="Rechercher ou créer (ex. vélo elliptique, curl…)" autocomplete="off" style="width:100%">
+    <div id="exRes"></div>
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
@@ -841,7 +876,7 @@ const num = s => { if (s==null) return NaN; const v=parseFloat(String(s).replace
 const daysBetween = (a,b) => Math.round((parseISO(b)-parseISO(a))/864e5);
 const esc = s => String(s??"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function deltaClass(k, d){ const g=MK[k]?.goal||0; if (!d || Math.abs(d)<0.05) return "flat"; if (!g) return "flat"; return d*g>0?"good":"bad"; }
-let toastT; function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true, 2600); }
+let toastT; function toast(msg, undo){ const t=$("#toast"); t.textContent=msg; if (undo){ const b=document.createElement("button"); b.textContent="Annuler"; b.className="tundo"; b.onclick=()=>{ t.hidden=true; undo(); }; t.append(b); } t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true, undo?5000:2600); }
 const store = { get(k){ try{return localStorage.getItem(k);}catch{return null;} }, set(k,v){ try{localStorage.setItem(k,v);}catch{} } };
 
 /* ---------- État ---------- */
@@ -1275,22 +1310,66 @@ function openEditor(p){
   $("#edStage").style.maxWidth = k==="face" ? "520px" : "560px";
   $("#edTitle").textContent="Cadrage · "+dfmt(p.date,{day:"numeric",month:"long"});
   $("#edImg").src=src(p); $("#edDate").value=p.date; $("#edKind").value=k; $("#edPick").checked=!!p.pick;
-  // photo de la veille (dans la séquence) pour l'alignement
+  // repères : jour 1 (silhouette ou transparence) ou photo précédente
   const list=photos.filter(x=>x.kind===k && x.id!==p.id && x.frame).sort((a,b)=>a.date<b.date?-1:1);
-  ed.ghost = [...list].reverse().find(x=>x.date<=p.date) || list[0] || null;
-  $("#edGhost").hidden=!ed.ghost; if (ed.ghost) $("#edGhost").src=src(ed.ghost);
-  $("#edPrevF").disabled=!ed.ghost;
+  ed.prev = [...list].reverse().find(x=>x.date<=p.date) || list[0] || null;
+  ed.day1 = list[0] && list[0].date<=p.date ? list[0] : null;
+  $("#edPrevF").disabled=!ed.prev; ed.mark=null; $("#edMarks").innerHTML=""; $("#edMark").classList.remove("on"); $("#edMark").textContent=k==="face"?"Placer les yeux":"Placer yeux et nombril";
+  $("#edGuides").innerHTML=`<i style="left:50%;top:0;bottom:0;width:1px"></i>`+guideY(k).map(([y,l])=>`<i class="g" style="top:${y*100}%"><span>${l}</span></i>`).join("");
+  $("#edRef").value = ed.day1 ? "sil" : ed.prev ? "veille" : "none";
+  [...$("#edRef").options].forEach(o=>o.disabled = (o.value==="sil"||o.value==="j1") ? !ed.day1 : o.value==="veille" ? !ed.prev : false);
+  setRef();
   $("#edAuto").hidden=!sample; $("#edMsg").textContent = p.framedBy==="claude"?"Cadré par Claude.":p.framedBy==="copie"?"Cadrage repris de la photo précédente : vérifie avec la transparence puis enregistre.":p.frame?"Cadré à la main.":"Pas encore cadrée.";
   $("#edDel").textContent="Supprimer la photo"; delArm=false;
   $("#ed").hidden=false; document.body.style.overflow="hidden";
   syncZoom(); requestAnimationFrame(edPlace);
 }
-function edPlace(){ if (!ed) return; const st=$("#edStage"); place($("#edImg"),st,ed.p,ed.f); if (ed.ghost) place($("#edGhost"),st,ed.ghost); $("#edGhost").style.opacity=$("#edGhostOp").value/100; }
+const guideY=k=> k==="face" ? [[0.43,"yeux"]] : [[0.21,"yeux"],[0.78,"nombril"]];
+function setRef(){ if (!ed) return; const r=$("#edRef").value; ed.ghost = r==="veille" ? ed.prev : (r==="j1"||r==="sil") ? ed.day1 : null;
+  $("#edGhost").hidden = !ed.ghost || r==="sil"; if (ed.ghost && r!=="sil") $("#edGhost").src=src(ed.ghost);
+  $("#edSil").hidden = r!=="sil" || !ed.day1; if (r==="sil" && ed.day1) silhouette(ed.day1); edPlace(); }
+const silCache=new Map();
+async function silhouette(ref){
+  const show=url=>{ if (ed?.ghost===ref){ $("#edSil").src=url; edPlace(); } };
+  if (silCache.has(ref.id)) return show(silCache.get(ref.id));
+  try{
+    const im=new Image(); im.crossOrigin="anonymous"; im.src=src(ref); await im.decode();
+    const sc=Math.min(1, 420/Math.max(im.naturalWidth,im.naturalHeight)); const w=Math.round(im.naturalWidth*sc), h=Math.round(im.naturalHeight*sc);
+    const c=document.createElement("canvas"); c.width=w; c.height=h; const x=c.getContext("2d"); x.filter="blur(1.5px)"; x.drawImage(im,0,0,w,h);
+    const d=x.getImageData(0,0,w,h).data; const g=new Float32Array(w*h); for (let i=0;i<w*h;i++) g[i]=d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11;
+    const m=new Float32Array(w*h); for (let y=1;y<h-1;y++) for (let xx=1;xx<w-1;xx++){ const i=y*w+xx;
+      const gx=-g[i-w-1]-2*g[i-1]-g[i+w-1]+g[i-w+1]+2*g[i+1]+g[i+w+1], gy=-g[i-w-1]-2*g[i-w]-g[i-w+1]+g[i+w-1]+2*g[i+w]+g[i+w+1]; m[i]=Math.hypot(gx,gy); }
+    const sorted=Float32Array.from(m).sort(); const th=Math.max(40, sorted[Math.floor(sorted.length*0.9)]);
+    const o=x.createImageData(w,h); for (let i=0;i<w*h;i++) if (m[i]>=th){ o.data[i*4]=255; o.data[i*4+1]=196; o.data[i*4+2]=64; o.data[i*4+3]=Math.min(255,90+m[i]/th*80); }
+    x.filter="none"; x.clearRect(0,0,w,h); x.putImageData(o,0,0); const url=c.toDataURL("image/png"); silCache.set(ref.id,url); show(url);
+  }catch{ // image non lisible (droits d'accès) : repli sur la transparence
+    if (ed?.ghost===ref){ $("#edRef").value="j1"; setRef(); $("#edMsg").textContent="Contour indisponible pour cette photo : le jour 1 s'affiche en transparence."; } }
+}
+function edPlace(){ if (!ed) return; const st=$("#edStage"); place($("#edImg"),st,ed.p,ed.f); const op=$("#edGhostOp").value/100;
+  if (ed.ghost){ place($("#edGhost"),st,ed.ghost); place($("#edSil"),st,ed.ghost); }
+  $("#edGhost").style.opacity=Math.min(op,.7); $("#edSil").style.opacity=Math.max(.25,op); }
+$("#edRef").addEventListener("change", setRef);
+$("#edMark").onclick=()=>{ if (!ed) return; if (ed.mark){ ed.mark=null; $("#edMarks").innerHTML=""; $("#edMark").classList.remove("on"); $("#edHelp").textContent="Placement annulé."; return; }
+  ed.mark={pts:[]}; $("#edMark").classList.add("on"); $("#edMarks").innerHTML=""; $("#edHelp").textContent="Touche le point entre tes deux yeux."; };
+$("#edStage").parentElement.addEventListener("pointerdown", e=>{
+  if (!ed?.mark || !e.target.closest("#edStage")) return; e.stopImmediatePropagation(); e.preventDefault();
+  const st=$("#edStage"), r=st.getBoundingClientRect(), W=st.clientWidth, H=st.clientHeight, dh=H/ed.f.s, dw=dh*ed.p.w/ed.p.h;
+  const X=e.clientX-r.left, Y=e.clientY-r.top; ed.mark.pts.push({x:(X-(W/2-ed.f.cx*dw))/dw, y:(Y-(H/2-ed.f.cy*dh))/dh});
+  $("#edMarks").insertAdjacentHTML("beforeend",`<b style="left:${X}px;top:${Y}px"></b>`);
+  const k=ed.p.kind, G=guideY(k);
+  if (k!=="face" && ed.mark.pts.length===1){ $("#edHelp").textContent="Touche maintenant ton nombril."; return; }
+  const [E,N]=ed.mark.pts;
+  if (k==="face"){ ed.f={cx:E.x, cy:E.y-(G[0][0]-0.5)*ed.f.s, s:ed.f.s}; }
+  else { const sNew=(N.y-E.y)/(G[1][0]-G[0][0]); if (!(sNew>0.05&&sNew<3)){ ed.mark={pts:[]}; $("#edMarks").innerHTML=""; $("#edHelp").textContent="Le nombril doit être sous les yeux. Recommence : touche entre tes yeux."; return; }
+    ed.f={cx:(E.x+N.x)/2, cy:E.y-(G[0][0]-0.5)*sNew, s:sNew}; }
+  ed.mark=null; $("#edMark").classList.remove("on"); syncZoom(); edPlace(); setTimeout(()=>{ $("#edMarks").innerHTML=""; },350);
+  $("#edHelp").textContent="Cadrage calé sur tes repères. Ajuste à la main si besoin, puis enregistre.";
+}, true);
 const zToS=z=>Math.pow(2,(50-z)/30)*0.8; const sToZ=s=>50-30*Math.log2(s/0.8);
 function syncZoom(){ $("#edZoom").value=Math.round(sToZ(ed.f.s)); }
 $("#edZoom").addEventListener("input", e=>{ ed.f.s=zToS(+e.target.value); edPlace(); });
 $("#edGhostOp").addEventListener("input", edPlace);
-$("#edImg").addEventListener("load", edPlace); $("#edGhost").addEventListener("load", edPlace);
+$("#edImg").addEventListener("load", edPlace); $("#edGhost").addEventListener("load", edPlace); $("#edSil").addEventListener("load", edPlace);
 (()=>{ const st=$("#edStage"); const pts=new Map(); let base=null;
   st.addEventListener("pointerdown", e=>{ st.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); base=null; });
   st.addEventListener("pointermove", e=>{
@@ -1307,7 +1386,7 @@ $("#edImg").addEventListener("load", edPlace); $("#edGhost").addEventListener("l
 function closeEditor(){ $("#ed").hidden=true; document.body.style.overflow=""; ed=null; }
 $("#edClose").onclick=closeEditor;
 $("#edReset").onclick=()=>{ ed.f={cx:.5,cy:.5,s:1}; syncZoom(); edPlace(); };
-$("#edPrevF").onclick=()=>{ if (!ed.ghost) return; ed.f={...frameOf(ed.ghost)}; syncZoom(); edPlace(); };
+$("#edPrevF").onclick=()=>{ if (!ed.prev) return; ed.f={...frameOf(ed.prev)}; syncZoom(); edPlace(); };
 $("#edAuto").onclick=async()=>{
   const p=ed.p, k=$("#edKind").value; $("#edMsg").textContent="Claude repère "+(k==="face"?"le visage":"la silhouette")+"…"; $("#edAuto").disabled=true;
   try{
@@ -1399,7 +1478,10 @@ function renderTanita(){
    SÉANCES — un exercice à la fois
    ========================================================= */
 const TYPES=[["push","Push"],["pull","Pull"],["jambes","Jambes"],["bras","Bras"]];
-const TL=Object.fromEntries(TYPES);
+const THEMES=[["push","Push"],["pull","Pull"],["jambes","Jambes"],["bras","Bras"],["cardio","Cardio"],["autre","Autre"]];
+const TL=new Proxy(Object.fromEntries(THEMES),{get:(o,k)=> (typeof k==="string" && (templates?.[k]?.label)) || o[k] || k});
+const sLabel=s=>TL[s.type]+(s.libre?" libre":"");
+function favTypes(){ const base=TYPES.map(x=>x[0]); const extra=Object.keys(templates).filter(k=>!base.includes(k) && tplSlots(templates[k]).length).sort(); return [...base.filter(k=>templates[k]||true), ...extra]; }
 let templates={}, sessions=[], draft=null, wakeLock=null, draftTimer=null, draftChain=Promise.resolve();
 let tonType=store.get("tonType")||"push";
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -1419,10 +1501,12 @@ const sameName=(a,b)=>a.trim().toLowerCase()===b.trim().toLowerCase();
 function best(name){ let b=null;
   for (const s of sessions) for (const ex of s.exercises||[]) if (sameName(ex.name,name)) for (const st of ex.sets||[]){ const v=score(ex,st); if (!b||v>b.v) b={v,r:st.r,w:st.w,load:ex.load}; }
   return b; }
-function fmtSet(st,v){ if (v.load==="cardio"||v.load==="time") return `${nf(st.r,st.r%1?1:0)} min`; if (v.load==="reps") return `${st.r} reps`;
+const cardioX=st=>[st.bpm?`${st.bpm} bpm`:"", st.note||""].filter(Boolean).join(" · ");
+function fmtSet(st,v){ if (v.load==="cardio") return [`${nf(st.r,st.r%1?1:0)} min`, cardioX(st)].filter(Boolean).join(" · "); if (v.load==="time") return `${nf(st.r,st.r%1?1:0)} min`; if (v.load==="reps") return `${st.r} reps`;
   if (v.load==="bw") return `${st.r} reps${st.w>0?" + "+wfmt(st.w)+" kg":""}`; return `${st.r} × ${wfmt(st.w)} ${LOAD[v.load]?.u||"kg"}`; }
 function summary(v,sets){ if (!sets||!sets.length) return "";
-  if (v.load==="cardio"||v.load==="time") return sets.length>1 ? `${sets.length} × ${nf(sets[0].r,sets[0].r%1?1:0)} min` : `${nf(sets[0].r,0)} min`;
+  if (v.load==="cardio") return sets.map(st=>fmtSet(st,v)).join(" + ");
+  if (v.load==="time") return sets.length>1 ? `${sets.length} × ${nf(sets[0].r,sets[0].r%1?1:0)} min` : `${nf(sets[0].r,0)} min`;
   const ws=[...new Set(sets.map(s=>s.w||0))];
   if (ws.length===1){ const w=ws[0]; const reps=sets.map(s=>s.r).join(" · ");
     if (noW(v)) return reps+" reps"; if (v.load==="bw") return reps+(w>0?` + ${wfmt(w)} kg`:" reps");
@@ -1442,12 +1526,15 @@ function renderSeances(){
   const mon=iso(monday(new Date())); const nW=sessions.filter(s=>s.date>=mon).length;
   $("#sWeek").textContent = sessions.length ? (nW?`${nW} séance${nW>1?"s":""} cette semaine`:"Aucune séance cette semaine") : "";
   const sg=suggestNext(); renderMuscles();
-  for (const [k,l] of TYPES){
-    const t=templates[k], last=lastOf(k);
+  for (const k of favTypes()){
+    const l=TL[k]; const t=templates[k], last=lastOf(k);
     const b=el("button",{class:"tbtn"+(sg&&sg.type===k?" sugg":"")});
     b.innerHTML=`${sg&&sg.type===k?'<span class="badge2">Suggérée</span>':""}<b>${l}</b><span>${tplSlots(t).length} exercices${last?` · ${ago(last.date)} · ${kg(last.tonnage||0)}`:""}</span>`;
     b.onclick=()=>startSession(k); host.append(b);
   }
+  const lb=el("button",{class:"tbtn libre"}); lb.innerHTML=`<b>Séance libre</b><span>Choisis un thème, ajoute tes exercices au fil de l'eau (cardio, muscu…)</span>`;
+  lb.onclick=()=>{ const box=$("#sLibre"); box.hidden=!box.hidden; }; host.append(lb);
+  $("#sLibre").innerHTML=`<span class="sub">Thème de la séance libre :</span><div class="chips">${THEMES.map(([k,l])=>`<button data-th="${k}">${l}</button>`).join("")}</div>`;
   // tonnage par séance
   $("#sTonBox").hidden=!sessions.length;
   if (sessions.length){
@@ -1483,7 +1570,7 @@ function renderExChart(){
 }
 
 /* ---- Calendrier et historique ---- */
-const TCOL={push:"var(--t-push)",pull:"var(--t-pull)",jambes:"var(--t-jambes)",bras:"var(--t-bras)"};
+const TCOL=new Proxy({push:"var(--t-push)",pull:"var(--t-pull)",jambes:"var(--t-jambes)",bras:"var(--t-bras)",cardio:"var(--s2)"},{get:(o,k)=>o[k]||"var(--muted)"});
 let calM = (()=>{ const d=new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
 let histType="all", histOpen=null, histLimit=15;
 const sortedSessions=()=>[...sessions].sort((a,b)=>(b.startedAt||b.date).localeCompare(a.startedAt||a.date));
@@ -1501,13 +1588,13 @@ function renderCal(){
     let bg="";
     if (ss.length===1) bg=`background:${TCOL[ss[0].type]||"var(--muted)"}`;
     else if (ss.length>1){ const n=ss.length; bg="background:linear-gradient(135deg,"+ss.map((s,i)=>`${TCOL[s.type]} ${i*100/n}% ${(i+1)*100/n}%`).join(",")+")"; }
-    const lab = ss.length ? ss.map(s=>TL[s.type]).join(" + ") : "";
+    const lab = ss.length ? ss.map(s=>sLabel(s)).join(" + ") : "";
     h+= ss.length ? `<button class="cday on${key===today?" today":""}" style="${bg}" data-id="${ss[0].id}" aria-label="${d} : ${esc(lab)}">${d}</button>`
                   : `<span class="cday${key===today?" today":""}${key>today?" fut":""}">${d}</span>`;
   }
   $("#cal").innerHTML=h;
   const tot=Object.values(count).reduce((a,b)=>a+b,0);
-  $("#calLeg").innerHTML=TYPES.map(([k,l])=>`<span><i style="background:${TCOL[k]}"></i>${l} <b class="num">${count[k]||0}</b></span>`).join("")+`<span class="sub">${tot} séance${tot>1?"s":""} ce mois-ci</span>`;
+  $("#calLeg").innerHTML=TYPES.map(([k,l])=>`<span><i style="background:${TCOL[k]}"></i>${l} <b class="num">${count[k]||0}</b></span>`).join("")+(Object.keys(count).some(k=>!TYPES.some(t=>t[0]===k))?`<span><i style="background:var(--s2)"></i>Autres <b class="num">${Object.entries(count).filter(([k])=>!TYPES.some(t=>t[0]===k)).reduce((a,[,v])=>a+v,0)}</b></span>`:"")+`<span class="sub">${tot} séance${tot>1?"s":""} ce mois-ci</span>`;
 }
 $("#calPrev").onclick=()=>{ calM=new Date(calM.getFullYear(),calM.getMonth()-1,1); renderCal(); };
 $("#calNext").onclick=()=>{ calM=new Date(calM.getFullYear(),calM.getMonth()+1,1); renderCal(); };
@@ -1522,7 +1609,7 @@ function renderHist(){
   $("#sHist").innerHTML = list.length ? list.slice(0,histLimit).map(s=>{
     const open=s.id===histOpen;
     return `<div class="hrow${open?" open":""}" data-id="${esc(s.id)}">
-      <button class="hhead" data-act="toggle" aria-expanded="${open}"><i style="background:${TCOL[s.type]||"var(--muted)"}"></i><b>${dfmt(s.date,{weekday:"short",day:"numeric",month:"short"})} · ${esc(TL[s.type]||s.type)}</b><span>${kg(s.tonnage||0)}${s.durationMin?` · ${s.durationMin} min`:""}${s.records?` · ${s.records} rec.`:""}</span></button>
+      <button class="hhead" data-act="toggle" aria-expanded="${open}"><i style="background:${TCOL[s.type]||"var(--muted)"}"></i><b>${dfmt(s.date,{weekday:"short",day:"numeric",month:"short"})} · ${esc(sLabel(s))}</b><span>${kg(s.tonnage||0)}${s.durationMin?` · ${s.durationMin} min`:""}${s.records?` · ${s.records} rec.`:""}</span></button>
       ${open?detailHTML(s):""}</div>`; }).join("") : `<p class="sub" style="padding:12px">Aucune séance ${esc(TL[histType]||"")} pour l'instant.</p>`;
   $("#sHistMore").hidden = list.length<=histLimit;
 }
@@ -1563,7 +1650,9 @@ async function deleteSession(id){
   if (changed){ nt.updatedAt=new Date().toISOString(); await db.doc("templates/"+s.type).set(nt); }
 }
 /* ---- Démarrer ---- */
-function startSession(type){
+$("#sLibre").addEventListener("click", e=>{ const b=e.target.closest("button[data-th]"); if (!b) return; $("#sLibre").hidden=true; startSession(b.dataset.th,{libre:true}); });
+function startSession(type, opt={}){
+  if (opt.libre){ draft={type, libre:true, date:iso(new Date()), startedAt:new Date().toISOString(), idx:0, slots:[], notes:"", summary:false}; saveDraft(true); keepAwake(); renderSeances(); scrollTo({top:0}); setTimeout(()=>openExPick(),50); return; }
   const t=templates[type];
   const slots=clone(tplSlots(t)).map(sl=>{
     const cur = sl.variants.find(v=>v.vid===sl.cur) ? sl.cur : sl.variants[0].vid;
@@ -1584,12 +1673,12 @@ const curVar=sl=>sl.variants.find(v=>v.vid===sl.cur)||sl.variants[0];
 
 /* ---- Exercice en cours ---- */
 function renderRun(){
-  $("#rTitle").textContent=TL[draft.type]||draft.type;
+  $("#rTitle").textContent=sLabelD();
   const mins=Math.round((Date.now()-new Date(draft.startedAt))/60000);
   $("#rSub").textContent=`${dfmt(draft.date,{weekday:"long",day:"numeric",month:"long"})} · ${mins} min · ${kg(sessionTon())}`;
   $("#rDots").innerHTML=draft.slots.map((sl,i)=>`<button data-i="${i}" class="${sl.status==="done"?"done":sl.status==="skip"?"skip":""}${i===draft.idx?" cur":""}" aria-label="${esc(curVar(sl).name)}">${i+1}</button>`).join("");
   const sl=curSlot(); const host=$("#rFocus"); host.innerHTML="";
-  if (!sl){ draft.idx=0; return; }
+  if (!sl){ draft.idx=0; host.innerHTML=`<div class="focus"><span class="pos">Séance ${esc(sLabelD())}</span><h3 class="exn">Aucun exercice</h3><p class="sub">Ajoute ton premier exercice : musculation, cardio (minutes, BPM, vitesse…) ou gainage.</p><button class="btn primary bigbtn" data-act="add">+ Ajouter un exercice</button>${draft.slots.length?"":""}</div>`; const side=$("#rSide"); if (side) side.innerHTML=""; return; }
   const v=curVar(sl); const prev=sl.prev[v.vid]||[]; const b=best(v.name); const tgt=v.target||8;
   const f=el("div",{class:"focus"});
   const lastTon = prev.length ? exTon(v,prev) : 0;
@@ -1607,15 +1696,15 @@ function renderRun(){
     <div class="exfoot"><button class="btn ghost" data-act="addset">+ Série</button>${v.sets.length?`<button class="btn ghost" data-act="delset">− Série</button>`:""}${noW(v)&&v.load!=="reps"?"":`<button class="chip stepchip" data-act="rest">Repos ${sl.rest} s</button>`}${noW(v)?"":`<button class="chip stepchip" data-act="step">pas ${wfmt(v.step||2.5)} kg</button>`}</div>
     ${noW(v)?"":`<div class="tonline"><span>Tonnage</span><span><b id="exTon">${kg(exTon(v,v.sets))}</b> <span id="exTonD"></span></span></div>`}
     <div class="navbar"><button class="btn" data-act="skip">${sl.status==="skip"?"Reprendre":"Passer"}</button><button class="btn primary" data-act="next">${draft.idx===draft.slots.length-1?"Terminer · voir le résumé":"Exercice terminé →"}</button></div>
-    <div class="addline"><input id="rNew" list="exNames" placeholder="Ajouter un exercice après celui-ci" autocomplete="off"><button class="btn" data-act="add">Ajouter</button></div>
-    <datalist id="exNames">${allNames().map(n=>`<option value="${esc(n)}">`).join("")}</datalist>`;
+    <button class="btn" data-act="add">+ Ajouter un exercice après celui-ci</button>`;
   const sets=$(".sets",f);
   v.sets.forEach((st,i)=>{
     const now=noW(v); const r=el("div",{class:"set2"+(now?" now":""),"data-i":i});
     r.innerHTML=`<span class="sn">${i+1}</span>
       <div class="stp"><button data-act="r-" aria-label="Moins">−</button><input data-f="r" inputmode="decimal" value="${nf(st.r||0,(st.r||0)%1?1:0)}" aria-label="Série ${i+1}"><button data-act="r+" aria-label="Plus">+</button><small>${LOAD[v.load]?.ru||"reps"} <b class="dr"></b></small></div>
       ${now?"":`<div class="stp"><button data-act="w-" aria-label="Moins">−</button><input data-f="w" inputmode="decimal" value="${wfmt(st.w||0)}" aria-label="Charge série ${i+1}"><button data-act="w+" aria-label="Plus">+</button><small>${LOAD[v.load].u} <b class="dw"></b></small></div>`}
-      <button class="chk${sl.checks[i]?" on":""}" data-act="chk" aria-label="Série ${i+1} faite">✓</button>`;
+      <button class="chk${sl.checks[i]?" on":""}" data-act="chk" aria-label="Série ${i+1} faite">✓</button>
+      ${v.load==="cardio"?`<div class="cextra"><input data-f="bpm" inputmode="numeric" placeholder="BPM moyen" value="${st.bpm||""}" aria-label="Fréquence cardiaque moyenne"><input data-f="note" placeholder="Détail : vitesse, pente, résistance…" value="${esc(st.note||"")}" aria-label="Détail"></div>`:""}`;
     sets.append(r); updRow(sl,v,i,r);
   });
   host.append(f); updTon(sl,v); renderRunSide(sl,v);
@@ -1651,6 +1740,7 @@ function updTon(sl,v){
 $("#rDots").addEventListener("click", e=>{ const b=e.target.closest("button[data-i]"); if (!b||!draft) return; draft.idx=+b.dataset.i; saveDraft(); renderRun(); scrollTo({top:0}); });
 $("#rFocus").addEventListener("click", e=>{
   const btn=e.target.closest("button[data-act]"); if (!btn||!draft) return;
+  if (btn.dataset.act==="add" && !curSlot()) return openExPick();
   const sl=curSlot(), v=curVar(sl), act=btn.dataset.act, row=btn.closest(".set2"), i=row?+row.dataset.i:-1;
   if (act==="r+"||act==="r-"){ const st=v.sets[i]; const stp=(v.load==="time")?0.5:(v.load==="cardio"?5:1); st.r=Math.max(0,Math.round(((st.r||0)+(act==="r+"?stp:-stp))*10)/10); $('input[data-f="r"]',row).value=nf(st.r,st.r%1?1:0); updRow(sl,v,i,row); updTon(sl,v); saveDraft(); return; }
   if (act==="w+"||act==="w-"){ const st=v.sets[i]; const stp=v.step||2.5; const old=st.w||0; st.w=Math.max(0,Math.round((old+(act==="w+"?stp:-stp))*100)/100);
@@ -1665,7 +1755,7 @@ $("#rFocus").addEventListener("click", e=>{
   else if (act==="rest"){ const o=[60,90,120,180]; sl.rest=o[(o.indexOf(sl.rest)+1)%o.length]; }
   else if (act==="skip"){ sl.status = sl.status==="skip" ? "todo" : "skip"; if (sl.status==="skip") return goNext(); }
   else if (act==="next"){ sl.status="done"; stopRest(); return goNext(); }
-  else if (act==="add"){ return addExercise(); }
+  else if (act==="add"){ return openExPick(); }
   saveDraft(); renderRun();
 });
 function goNext(){
@@ -1677,21 +1767,52 @@ function goNext(){
 }
 $("#rFocus").addEventListener("input", e=>{
   if (!draft) return; const t=e.target; const row=t.closest(".set2"); if (!row) return;
-  const sl=curSlot(), v=curVar(sl), i=+row.dataset.i, val=num(t.value); if (!isFinite(val)) return;
+  const sl=curSlot(), v=curVar(sl), i=+row.dataset.i;
+  if (t.dataset.f==="note"){ v.sets[i].note=t.value; saveDraft(); return; }
+  const val=num(t.value); if (t.dataset.f==="bpm"){ v.sets[i].bpm=isFinite(val)?Math.round(val):null; saveDraft(); return; }
+  if (!isFinite(val)) return;
   v.sets[i][t.dataset.f]=val; updRow(sl,v,i,row); updTon(sl,v); saveDraft();
 });
 $("#rFocus").addEventListener("focusin", e=>{ if (e.target.matches(".stp input")) e.target.select(); });
-$("#rFocus").addEventListener("keydown", e=>{ if (e.target.id==="rNew" && e.key==="Enter"){ e.preventDefault(); addExercise(); } });
+
 function guessLoad(n){ if (/marche|tapis|v[ée]lo|cardio|rameur|elliptique|course/i.test(n)) return "cardio"; if (/gainage|planche/i.test(n)) return "time"; if (/crunch|russian|abdo|relev/i.test(n)) return "reps"; if (/halt[èe]re/i.test(n)) return "pair"; if (/traction|dips/i.test(n)) return "bw"; return "machine"; }
-function addExercise(){
-  const n=($("#rNew")?.value||"").trim(); if (!n) return;
-  let src=null; for (const t of Object.values(templates)) for (const sl of tplSlots(t)) for (const v of sl.variants) if (!src && sameName(v.name,n)) src=v;
-  const load=src?.load||guessLoad(n);
+const LOADS_UI=[["machine","Machine / poulie"],["pair","Haltères (poids par haltère)"],["side","Barre (poids par côté)"],["bw","Poids du corps (+ lest)"],["cardio","Cardio (minutes, BPM)"],["time","Gainage (minutes)"],["reps","Répétitions sans charge"]];
+function exLibrary(){ const m=new Map();
+  for (const t of Object.values(templates)) for (const sl of tplSlots(t)) for (const v of sl.variants) if (!m.has(v.name.toLowerCase())) m.set(v.name.toLowerCase(), clone(v));
+  for (const se of [...sessions].sort((a,b)=>(b.startedAt||"").localeCompare(a.startedAt||""))) for (const e of se.exercises||[]){ const k=e.name.toLowerCase(); if (!m.has(k)) m.set(k,{vid:uid(),name:e.name,load:e.load||guessLoad(e.name),bar:e.bar||0,step:2.5,target:(e.sets?.[0]?.r)||10,sets:clone(e.sets||[])}); }
+  for (const n of ["Vélo elliptique","Marche inclinée 4 km/h · 14 %","Vélo","Rameur","Course à pied"]) if (!m.has(n.toLowerCase())) m.set(n.toLowerCase(),{vid:uid(),name:n,load:"cardio",bar:0,step:2.5,target:20,sets:[{r:20,w:0}]});
+  return [...m.values()]; }
+function exGroup(v){ if (v.load==="cardio") return "Cardio"; for (const [m,re] of MUSC) if (re.test(v.name)) return m; return "Autres"; }
+let exNew=null;
+function openExPick(){ $("#exPick").hidden=false; document.body.style.overflow="hidden"; $("#exQ").value=""; exNew=null; renderExPick(); setTimeout(()=>$("#exQ").focus(),50); }
+function closeExPick(){ $("#exPick").hidden=true; document.body.style.overflow=""; }
+function renderExPick(){
+  const q=norm($("#exQ").value.trim()); const lib=exLibrary().filter(v=>!q || norm(v.name).includes(q));
+  const groups={}; lib.forEach(v=>(groups[exGroup(v)] ||= []).push(v));
+  const order=["Cardio",...MUSC.map(m=>m[0]),"Autres"];
+  let h=""; for (const g of order){ const arr=groups[g]; if (!arr) continue; h+=`<h3>${esc(g)}</h3><div class="nres">${arr.sort((a,b)=>a.name.localeCompare(b.name,"fr")).map(v=>`<button data-ex="${esc(v.name)}"><span style="color:var(--fg);font-size:14px;white-space:normal">${esc(v.name)}</span><span>${esc(LOADS_UI.find(x=>x[0]===v.load)?.[1].split(" (")[0]||"")}</span></button>`).join("")}</div>`; }
+  const name=$("#exQ").value.trim();
+  if (name && !lib.some(v=>sameName(v.name,name))){ const ld=exNew?.load||guessLoad(name);
+    h=`<div class="panel" style="display:flex;flex-direction:column;gap:8px"><b>Créer « ${esc(name)} »</b><span class="sub">Type d'exercice :</span><div class="chips">${LOADS_UI.map(([k,l])=>`<button data-ld="${k}" aria-pressed="${k===ld}">${l}</button>`).join("")}</div><button class="btn primary" data-create="1">Ajouter cet exercice</button></div>`+h; exNew={load:ld}; }
+  $("#exRes").innerHTML = h || `<p class="sub">Tape le nom d'un exercice pour le créer.</p>`;
+}
+$("#exQ").addEventListener("input", ()=>{ exNew=null; renderExPick(); });
+$("#exClose").onclick=closeExPick;
+$("#exRes").addEventListener("click", e=>{ const b=e.target.closest("button"); if (!b) return;
+  if (b.dataset.ld){ exNew={load:b.dataset.ld}; $$("#exRes button[data-ld]").forEach(x=>x.setAttribute("aria-pressed",x===b)); return; }
+  if (b.dataset.create){ addExercise($("#exQ").value.trim(), exNew?.load); closeExPick(); return; }
+  if (b.dataset.ex){ addExercise(b.dataset.ex); closeExPick(); } });
+function addExercise(n, forcedLoad){
+  if (!n) return;
+  let src=exLibrary().find(v=>sameName(v.name,n))||null; if (forcedLoad && src && src.load!==forcedLoad) src=null;
+  const load=src?.load||forcedLoad||guessLoad(n);
   const v = src ? clone(src) : {vid:uid(), name:n, load, bar:0, step:load==="pair"?2:2.5, target:noW({load})?20:10, sets: load==="cardio"?[{r:30,w:0}]: load==="time"?[{r:1,w:0},{r:1,w:0},{r:1,w:0}] : [{r:10,w:0},{r:10,w:0},{r:10,w:0}]};
   v.vid = v.vid||uid();
   const sl={id:uid(), cur:v.vid, variants:[v], prev:{[v.vid]: src?clone(src.sets):[]}, status:"todo", checks:[], rest:90, added:true};
-  draft.slots.splice(draft.idx+1,0,sl); draft.idx+=1; saveDraft(); renderRun(); scrollTo({top:0});
+  if (!draft.slots.length){ draft.slots.push(sl); draft.idx=0; } else { draft.slots.splice(draft.idx+1,0,sl); draft.idx+=1; }
+  saveDraft(); renderRun(); scrollTo({top:0});
 }
+function sLabelD(){ return draft ? TL[draft.type]+(draft.libre?" libre":"") : ""; }
 
 /* ---- Minuteur de repos ---- */
 let restEnd=0, restIv=null, actx=null;
@@ -1709,18 +1830,19 @@ function buildSession(){
   const exercises=[], skipped=[]; let rec=0, recNames=[];
   for (const sl of draft.slots){ const v=curVar(sl);
     if (sl.status!=="done"){ if (sl.status==="skip") skipped.push(v.name); continue; }
-    const sets=v.sets.map(s=>({r:+s.r||0,w:+s.w||0}));
+    const sets=v.sets.map(s=>{ const o={r:+s.r||0,w:+s.w||0}; if (s.bpm) o.bpm=+s.bpm; if (s.note) o.note=s.note; return o; });
     const b=best(v.name); if (!noW(v) && b && sets.some(st=>score(v,st)>b.v+1e-9)){ rec++; recNames.push(v.name); }
     exercises.push({slot:sl.id, vid:v.vid, name:v.name, load:v.load, bar:v.bar||0, sets, tonnage:exTon(v,sets)}); }
   const tonnage=exercises.reduce((a,e)=>a+e.tonnage,0);
   const end=new Date(); const durationMin=Math.round((end-new Date(draft.startedAt))/60000);
-  return {sess:{type:draft.type, date:draft.date, startedAt:draft.startedAt, endedAt:end.toISOString(), durationMin, tonnage, records:rec, exercises, skipped, bodyWeight:bodyW(), tplBefore: templates[draft.type] ? clone(templates[draft.type]) : null}, recNames};
+  return {sess:{type:draft.type, libre:!!draft.libre, date:draft.date, startedAt:draft.startedAt, endedAt:end.toISOString(), durationMin, tonnage, records:rec, exercises, skipped, bodyWeight:bodyW(), tplBefore: templates[draft.type] ? clone(templates[draft.type]) : null}, recNames};
 }
 function renderSum(){
   const {sess, recNames}=buildSession(); const last=lastOf(draft.type);
   const d = last?.tonnage ? sess.tonnage-last.tonnage : null;
   const h=$("#sSum");
-  h.innerHTML=`<div class="runhead"><div class="t"><b>Résumé · ${esc(TL[draft.type])}</b><span>${dfmt(draft.date,{weekday:"long",day:"numeric",month:"long"})}</span></div></div>
+  h.innerHTML=`<div class="runhead"><div class="t"><b>Résumé · ${esc(sLabelD())}</b><span>${dfmt(draft.date,{weekday:"long",day:"numeric",month:"long"})}</span></div></div>
+    <label class="row sub" style="gap:8px">Date de la séance <input type="date" id="sumDate" class="exsel" value="${draft.date}" max="${iso(new Date())}"></label>
     <div class="sumgrid">
       <div class="tile"><span class="k">Tonnage</span><span class="v">${Math.round(sess.tonnage).toLocaleString("fr-FR")}<small>kg</small></span>${d!=null?`<span class="d delta ${d>=0?"good":"flat"}">${d>=0?"+":"−"}${Math.abs(Math.round(d)).toLocaleString("fr-FR")} kg vs ${dfmt(last.date,{day:"numeric",month:"short"})}</span>`:`<span class="d sub">première séance enregistrée</span>`}</div>
       <div class="tile"><span class="k">Durée</span><span class="v">${sess.durationMin}<small>min</small></span></div>
@@ -1729,9 +1851,12 @@ function renderSum(){
     </div>
     <div class="hist">${sess.exercises.map(e=>`<div><b>${esc(e.name)}</b><span>${esc(summary(e,e.sets))}${e.tonnage?" · "+kg(e.tonnage):""}</span></div>`).join("")}</div>
     <textarea id="rNotes" placeholder="Notes de séance (forme, douleur, réglage machine…)">${esc(draft.notes||"")}</textarea>
+    <div class="panel" style="display:flex;flex-direction:column;gap:8px"><label style="flex-direction:row;display:flex;gap:8px;align-items:center"><input type="checkbox" id="sumFav" ${draft.favName?"checked":""}> <b>Enregistrer comme séance favorite</b></label><input id="sumFavName" class="exsel" placeholder="Nom (ex. Pull court, Cardio du samedi)" value="${esc(draft.favName||"")}"><span class="sub">Elle apparaîtra avec tes autres séances, préremplie avec ces exercices.</span></div>
     <div class="navbar"><button class="btn" id="sumBack">Revenir</button><button class="btn primary" id="sumSave">Enregistrer la séance</button></div>
     <button class="btn ghost danger" id="sumCancel">Abandonner sans enregistrer</button>`;
   $("#rNotes").oninput=e=>{ draft.notes=e.target.value; saveDraft(); };
+  $("#sumDate").onchange=e=>{ if (e.target.value){ draft.date=e.target.value; saveDraft(); } };
+  $("#sumFavName").oninput=e=>{ draft.favName=e.target.value; if (e.target.value) $("#sumFav").checked=true; saveDraft(); };
   $("#sumBack").onclick=()=>{ draft.summary=false; const t=draft.slots.findIndex(s=>s.status==="todo"); draft.idx=t>=0?t:draft.slots.length-1; saveDraft(); renderSeances(); };
   $("#sumSave").onclick=saveSession; $("#sumCancel").onclick=cancelSession;
 }
@@ -1740,19 +1865,21 @@ async function saveSession(){
   if (!sess.exercises.length) return toast("Aucun exercice terminé : rien à enregistrer.");
   const btn=$("#sumSave"); btn.disabled=true;
   // séance type mise à jour : variante choisie et dernières valeurs, exercices ajoutés conservés
-  const tpl={type:draft.type, label:TL[draft.type], updatedAt:sess.endedAt, slots:draft.slots.map(sl=>{
-    const base=tplSlots(templates[draft.type]).find(x=>x.id===sl.id);
+  const favOn=$("#sumFav")?.checked && ($("#sumFavName")?.value||"").trim(); const favKey = favOn ? "fav-"+norm(favOn).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) : null;
+  const tplKey = favKey || (draft.libre ? null : draft.type);
+  const tpl={type:tplKey||draft.type, label: favOn || TL[draft.type], updatedAt:sess.endedAt, slots:draft.slots.filter(sl=>!favKey||sl.status==="done").map(sl=>{
+    const base=tplSlots(templates[tplKey||draft.type]).find(x=>x.id===sl.id);
     const variants=sl.variants.map(v=>{ const old=base?.variants.find(o=>o.vid===v.vid);
       const used = sl.status==="done" && v.vid===sl.cur;
-      return {vid:v.vid,name:v.name,load:v.load,bar:v.bar||0,step:v.step||2.5,target:v.target||8, sets: used ? v.sets.map(s=>({r:+s.r||0,w:+s.w||0})) : (old?.sets || sl.prev[v.vid] || v.sets)}; });
+      return {vid:v.vid,name:v.name,load:v.load,bar:v.bar||0,step:v.step||2.5,target:v.target||8, sets: used ? v.sets.map(s=>{ const o={r:+s.r||0,w:+s.w||0}; if (s.bpm) o.bpm=+s.bpm; if (s.note) o.note=s.note; return o; }) : (old?.sets || sl.prev[v.vid] || v.sets)}; });
     return {id:sl.id, cur: sl.status==="done"?sl.cur:(base?.cur||sl.cur), rest:sl.rest, variants}; })};
   try{
     clearTimeout(draftTimer); await draftChain;
     await db.collection("sessions").doc(draft.startedAt.replace(/[^0-9]/g,"").slice(0,14)+"-"+draft.type).set(sess);
-    await db.doc("templates/"+draft.type).set(tpl);
+    if (tplKey) await db.doc("templates/"+tplKey).set(tpl);
     await db.doc("drafts/current").delete();
     draft=null; stopRest(); wakeLock?.release?.().catch(()=>{}); renderSeances(); scrollTo({top:0});
-    toast(`Séance enregistrée · ${kg(sess.tonnage)}${sess.records?` · ${sess.records} record${sess.records>1?"s":""}`:""}`);
+    toast(`Séance enregistrée · ${sess.tonnage?kg(sess.tonnage):(sess.durationMin||0)+" min"}${sess.records?` · ${sess.records} record${sess.records>1?"s":""}`:""}`);
   }catch{ toast("Enregistrement impossible. Réessaie, ta séance est conservée."); btn.disabled=false; }
 }
 let cancelArm=false;
@@ -1785,6 +1912,7 @@ const F={ // valeurs pour 100 g (Ciqual 2025, sauf mention)
   // Chili maison, 6 portions : 700 g steak haché 5 %, 750 g purée de tomate, 520 g riz cru, 500 g poivron, 1 kg haricots rouges cuits
   chili:{n:"Chili",k:123.05,p:8.41,g:17.57,l:1.42,u:578.33,un:"portion"},
 };
+const F2={tomate:{n:"Purée / coulis de tomate",k:46,p:2,g:7.6,l:0.2},poivron:{n:"Poivron (cru)",k:23,p:0.8,g:3.5,l:0.3},haricot:{n:"Haricots rouges (appertisés, égouttés)",k:108,p:8.3,g:13,l:1}};
 const DEF_CFG={
   targets:{kcal:2350,p:143,l:63,g:287},
   pdj:{normal:[{f:F.oeuf,q:165},{f:F.huile,q:5},{f:F.weeta,q:38},{f:F.lait,q:200}],
@@ -1808,9 +1936,20 @@ const Z={kcal:0,p:0,g:0,l:0};
 const macro=(f,q)=>{ const k=(+q||0)/100; return {kcal:(f.k||0)*k,p:(f.p||0)*k,g:(f.g||0)*k,l:(f.l||0)*k}; };
 const addM=(a,b)=>({kcal:a.kcal+b.kcal,p:a.p+b.p,g:a.g+b.g,l:a.l+b.l});
 const sumItems=its=>(its||[]).reduce((a,it)=>addM(a,macro(it.f,it.q)),Z);
+/* favoris (repas complets) et recettes : migration douce de l'ancienne config */
+function migrateCfg(c){
+  if (!Array.isArray(c.favs)){ c.favs=[];
+    if (c.pdj?.normal?.length) c.favs.push({id:"pdj-normal",name:"Petit-déj normal",meal:"pdj",items:clone(c.pdj.normal)});
+    if (c.pdj?.light?.length) c.favs.push({id:"pdj-light",name:"Petit-déj light",meal:"pdj",items:clone(c.pdj.light)});
+    if (c.colla?.length) c.favs.push({id:"colla",name:"Collation habituelle",meal:"colla",items:clone(c.colla)}); }
+  if (!Array.isArray(c.recipes)){ c.recipes=[];
+    if ((c.plats||[]).some(o=>/chili/i.test(o.f.n))) c.recipes.push({id:"chili",name:"Chili",portions:6,ings:[{f:F.steak,q:700},{f:F2.tomate,q:750},{f:F.riz,q:520},{f:F2.poivron,q:500},{f:F2.haricot,q:1000}]}); }
+  return c; }
+function recipeFood(r){ const tw=r.ings.reduce((a,x)=>a+(+x.q||0),0)||1; const m=sumItems(r.ings); const k=100/tw;
+  return {n:r.name, k:+(m.kcal*k).toFixed(2), p:+(m.p*k).toFixed(2), g:+(m.g*k).toFixed(2), l:+(m.l*k).toFixed(2), u:+(tw/(r.portions||1)).toFixed(2), un:"portion", rid:r.id}; }
 function dayDoc(d){ return nLog[d] || {date:d, meals:{pdj:[],midi:[],diner:[],colla:[]}, libres:[]}; }
 function dayTot(d){ const x=dayDoc(d); let t=Z; for (const [k] of MEALS) t=addM(t,sumItems(x.meals?.[k])); for (const l of x.libres||[]) t=addM(t,{kcal:+l.k||0,p:0,g:0,l:0}); return t; }
-const cfg=()=>nCfg||clone(DEF_CFG);
+const cfg=()=>nCfg||(nCfg=migrateCfg(clone(DEF_CFG)));
 const T=()=>({...DEF_CFG.targets, ...(nCfg?.targets||{})});
 function qtyLabel(f,q){ if (f.u) { const n=q/f.u; return `${nf(n,n%1?1:0)} ${f.un||"unité"}${n>1?"s":""}`; } return `${nf(q,0)} ${f.ml?"ml":"g"}`; }
 function saveDay(){ const d=clone(dayDoc(nDate)); nLog[nDate]=d; if (!db) return; nChain=nChain.then(()=>db.doc("nlog/"+nDate).set(d)).catch(()=>toast("Enregistrement impossible.")); }
@@ -1838,7 +1977,7 @@ function renderNutrition(){
   // tuiles
   const d=dayDoc(nDate);
   $("#nTiles").innerHTML=MEALS.map(([k,l])=>{ const its=d.meals?.[k]||[]; const m=sumItems(its); const on=its.length>0;
-    return `<button class="mt${on?" on":""}${lastPop===k?" pop":""}" data-meal="${k}"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICO[k]}</svg></span><span class="plus">${on?"✓":"+"}</span><b>${l}</b><span>${on?`${nf(m.kcal,0)} kcal · ${nf(m.p,0)} g prot.`:(k==="colla"?"Un toucher pour l'ajouter":"À compléter")}</span></button>`; }).join("");
+    return `<button class="mt${on?" on":""}${lastPop===k?" pop":""}" data-meal="${k}"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICO[k]}</svg></span><span class="plus">${on?"✓":"+"}</span><b>${l}</b><span>${on?`${nf(m.kcal,0)} kcal · ${nf(m.p,0)} g prot.`:"Ajouter"}</span></button>`; }).join("");
   lastPop=null;
   // repas libres
   $("#nLibres").innerHTML=(d.libres||[]).length ? `<div class="lines">${d.libres.map((x,i)=>`<div class="ln"><span class="nm">${esc(x.label||"Repas libre")}<small>estimation</small></span><div class="stp" style="width:150px"><button data-lk="-" data-i="${i}">−</button><input data-lki="${i}" inputmode="numeric" value="${+x.k||0}"><button data-lk="+" data-i="${i}">+</button><small>kcal</small></div><button class="xbtn" data-ldel="${i}" aria-label="Retirer">×</button></div>`).join("")}</div>` : "";
@@ -1850,10 +1989,10 @@ function streaks(){ const G=T(); let a=0,b=0,ka=true,kb=true; const today=iso(ne
     if (ka && Math.abs(t.kcal-G.kcal)<=G.kcal*0.08) a++; else ka=false;
     if (kb && t.p>=G.p*0.97) b++; else kb=false; if (!ka&&!kb) break; }
   return {kcal:a,p:b}; }
-$("#nTiles").addEventListener("click", e=>{ const b=e.target.closest("button[data-meal]"); if (!b) return; const k=b.dataset.meal; const d=dayDoc(nDate);
-  if (k==="colla" && !(d.meals.colla||[]).length){ ensureDay().meals.colla=clone(cfg().colla).map(x=>({...x,id:nid()})); saveDay(); lastPop="colla"; renderNutrition(); const m=sumItems(nLog[nDate].meals.colla); toast(`Collation ajoutée · ${nf(m.kcal,0)} kcal`); return; }
-  if (k==="pdj" && !(d.meals.pdj||[]).length){ nStack=[{v:"pdj"}]; return renderNutrition(); }
-  nStack=[{v:(k==="midi"||k==="diner")?"meal":"edit", meal:k}]; renderNutrition(); scrollTo({top:0}); });
+$("#nTiles").addEventListener("click", e=>{ const b=e.target.closest("button[data-meal]"); if (!b) return;
+  nStack=[{v:"meal", meal:b.dataset.meal}]; renderNutrition(); scrollTo({top:0}); });
+$("#nRecipes").onclick=()=>{ nStack=[{v:"recipes"}]; renderNutrition(); scrollTo({top:0}); };
+$("#nFavs").onclick=()=>{ nStack=[{v:"favs"}]; renderNutrition(); scrollTo({top:0}); };
 $("#nPrev").onclick=()=>{ nDate=iso(addDays(parseISO(nDate),-1)); renderNutrition(); };
 $("#nNext").onclick=()=>{ if (nDate<iso(new Date())){ nDate=iso(addDays(parseISO(nDate),1)); renderNutrition(); } };
 $("#nLibre").onclick=()=>{ (ensureDay().libres ||= []).push({id:nid(),label:"Repas libre",k:1000}); saveDay(); renderNutrition(); };
@@ -1894,13 +2033,42 @@ function backHead(title, sub){ return `<div class="nback"><button class="iconbtn
 const mealName=k=>(MEALS.find(m=>m[0]===k)||[])[1];
 function renderSub(){
   $("#nHome").hidden=true; const h=$("#nSub"); h.hidden=false; const s=top(); const d=dayDoc(nDate);
+  if (s.v==="edit") s.v="meal";
   if (s.v==="pdj"){ const c=cfg(); const o=(key,lab)=>{ const m=sumItems(c.pdj[key]); return `<button class="opt" data-pdj="${key}"><span class="nm"><b>${lab}</b><small>${c.pdj[key].map(x=>`${x.f.n.split(" (")[0]} ${qtyLabel(x.f,x.q)}`).join(" · ")}</small></span><span class="kc">${nf(m.kcal,0)}<small> kcal</small></span></button>`; };
     h.innerHTML=backHead("Petit-déj","Choisis ta formule")+`<div class="opts">${o("normal","Normal")}${o("light","Light")}<button class="opt other" data-pdj="autre"><span class="nm"><b>Autre</b><small>Composer librement</small></span><span class="kc">+</span></button></div>`; return; }
-  if (s.v==="meal"){ const its=d.meals[s.meal]||[]; const m=sumItems(its);
+  if (s.v==="meal"){ const its=d.meals[s.meal]||[]; const m=sumItems(its); const c=cfg();
+    const favs=[...c.favs].sort((a,b)=>(b.meal===s.meal)-(a.meal===s.meal));
+    const ico='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
     h.innerHTML=backHead(mealName(s.meal), `${nf(m.kcal,0)} kcal · ${nf(m.p,0)} P · ${nf(m.g,0)} G · ${nf(m.l,0)} L`)+
-      `${(cfg().plats||[]).length?`<h3>Plat habituel</h3><div class="opts">${cfg().plats.map((o,i)=>{ const m=macro(o.f,o.q); return `<button class="opt" data-plat="${i}"><span class="nm"><b>${esc(o.f.n)}</b><small>${qtyLabel(o.f,o.q)} · ${nf(m.p,0)} P · ${nf(m.g,0)} G · ${nf(m.l,0)} L</small></span><span class="kc">${nf(m.kcal,0)}<small> kcal</small></span></button>`; }).join("")}</div><h3>Ou compose ton assiette</h3>`:""}<div class="cat4">${CATS.map(([c,l,col])=>{ const ci=its.filter(x=>x.cat===c); return `<button class="ct${ci.length?" on":""}" data-cat="${c}"><span class="h"><span class="dot" style="background:${col}"></span><b>${l}</b></span>${ci.length?`<ul>${ci.map(x=>`<li>${esc(x.f.n.split(" (")[0])}<span>${qtyLabel(x.f,x.q)}</span></li>`).join("")}</ul>`:`<span class="empty">Choisir…</span>`}</button>`; }).join("")}</div>`+
-      (its.some(x=>!x.cat)?`<div class="lines">${its.filter(x=>!x.cat).map(x=>lineHTML(x)).join("")}</div>`:"")+
-      `<button class="btn primary bigbtn" data-nav="done">Valider le repas</button>${its.length?`<button class="btn ghost danger" data-nav="clear">Vider ce repas</button>`:""}`; return; }
+      `<button class="nsearch" data-nav="addfree">${ico}<span>Ajouter un aliment<br><small class="sub" style="font-weight:400">Rechercher, scanner un code-barres ou créer</small></span></button>`+
+      (its.length?`<h3>Dans ce repas</h3><div class="lines">${its.map(x=>lineHTML(x)).join("")}</div>`:"")+
+      `<div class="row"><h3>Repas favoris</h3><span class="spacer"></span><span class="sub">1 toucher = tout ajouter</span></div>`+
+      (favs.length?`<div class="favs">${favs.map(f=>{ const fm=sumItems(f.items); return `<span class="fav"><button data-fav="${f.id}" style="border:0;background:none;padding:0;text-align:left"><b>${esc(f.name)}</b> <small>${nf(fm.kcal,0)} kcal</small></button><button class="more" data-favm="${f.id}" aria-label="Gérer ${esc(f.name)}">⋯</button></span>`; }).join("")}</div>`:`<p class="sub">Aucun favori. Compose un repas puis touche « Enregistrer en favori ».</p>`)+
+      `<div class="row"><h3>Mes recettes</h3><span class="spacer"></span><button class="btn ghost" data-nav="newrec" style="min-height:36px">+ Nouvelle</button></div>`+
+      (c.recipes.length?`<div class="opts">${c.recipes.map(r=>{ const f=recipeFood(r); const rm=macro(f,f.u); return `<button class="opt" data-rec="${r.id}"><span class="nm"><b>${esc(r.name)}</b><small>1 portion · ${nf(rm.p,0)} P · ${nf(rm.g,0)} G · ${nf(rm.l,0)} L</small></span><span class="kc">${nf(rm.kcal,0)}<small> kcal</small></span></button>`; }).join("")}</div>`:`<p class="sub">Crée une recette (plat maison en plusieurs portions) pour l'ajouter en un toucher.</p>`)+
+      `<details class="panel"${its.some(x=>x.cat)?" open":""}><summary style="cursor:pointer;font-weight:600">Composer par catégorie</summary><p class="sub" style="margin:8px 0">Tes aliments habituels, rangés par type. Ils s'enrichissent au fil de tes choix.</p><div class="cat4">${CATS.map(([cc,l,col])=>{ const ci=its.filter(x=>x.cat===cc); return `<button class="ct${ci.length?" on":""}" data-cat="${cc}"><span class="h"><span class="dot" style="background:${col}"></span><b>${l}</b></span>${ci.length?`<ul>${ci.map(x=>`<li>${esc(x.f.n.split(" (")[0])}<span>${qtyLabel(x.f,x.q)}</span></li>`).join("")}</ul>`:`<span class="empty">Choisir…</span>`}</button>`; }).join("")}</div></details>`+
+      (its.length?`<button class="btn" data-nav="savefav">★ Enregistrer ce repas en favori</button>`:"")+
+      `<button class="btn primary bigbtn" data-nav="done">${its.length?"Valider le repas":"Fermer"}</button>${its.length?`<button class="btn ghost danger" data-nav="clear">Vider ce repas</button>`:""}`; return; }
+  if (s.v==="favs"){ const c=cfg();
+    h.innerHTML=backHead("Mes repas favoris","Un favori ajoute tous ses aliments en un toucher")+(c.favs.length?`<div class="opts">${c.favs.map(f=>{ const fm=sumItems(f.items); return `<button class="opt" data-favm="${f.id}"><span class="nm"><b>${esc(f.name)}</b><small>${f.items.map(x=>`${esc(x.f.n.split(" (")[0])} ${qtyLabel(x.f,x.q)}`).join(" · ")}</small></span><span class="kc">${nf(fm.kcal,0)}<small> kcal</small></span></button>`; }).join("")}</div>`:`<p class="sub">Aucun favori pour l'instant. Dans un repas, touche « Enregistrer ce repas en favori ».</p>`); return; }
+  if (s.v==="fav"){ const c=cfg(); const f=c.favs.find(x=>x.id===s.id); if (!f){ nStack.pop(); return renderNutrition(); } const fm=sumItems(f.items);
+    h.innerHTML=backHead(esc(f.name), `${nf(fm.kcal,0)} kcal · ${nf(fm.p,0)} P · ${nf(fm.g,0)} G · ${nf(fm.l,0)} L`)+
+      `<label class="rform" style="grid-template-columns:1fr">Nom<input id="favName" value="${esc(f.name)}"></label>
+      <div class="lines">${f.items.map((x,i)=>{ const mm=macro(x.f,x.q); return `<div class="rline"><span class="nm">${esc(x.f.n)}<br><small class="sub">${nf(mm.kcal,0)} kcal</small></span><input data-fq="${i}" inputmode="decimal" value="${nf(x.q,x.q%1?1:0)}" aria-label="Quantité en ${x.f.ml?"ml":"g"}"><button class="xbtn" data-fdel="${i}" aria-label="Retirer">×</button></div>`; }).join("")}</div>
+      <span class="sub">Quantités en grammes (ml pour les liquides).</span>
+      <button class="btn" data-nav="favadd">+ Ajouter un aliment au favori</button>
+      ${s.meal?`<button class="btn primary bigbtn" data-fav="${f.id}">Ajouter à ${esc(mealName(s.meal)||"ce repas")}</button>`:""}
+      <button class="btn ghost danger" data-nav="favdel">Supprimer ce favori</button>`; return; }
+  if (s.v==="recipes"){ const c=cfg();
+    h.innerHTML=backHead("Mes recettes","Plats maison préparés en plusieurs portions")+`<div class="opts">${c.recipes.map(r=>{ const f=recipeFood(r); const rm=macro(f,f.u); return `<button class="opt" data-redit="${r.id}"><span class="nm"><b>${esc(r.name)}</b><small>${r.portions} portions · ${r.ings.length} ingrédients · ${nf(rm.p,0)} P / portion</small></span><span class="kc">${nf(rm.kcal,0)}<small> kcal</small></span></button>`; }).join("")}</div><button class="btn primary" data-nav="newrec">+ Nouvelle recette</button>`; return; }
+  if (s.v==="recipe"){ const r=s.r; const f=recipeFood(r); const rm=macro(f,f.u); const tm=sumItems(r.ings);
+    h.innerHTML=backHead(r.name||"Nouvelle recette", `1 portion : ${nf(rm.kcal,0)} kcal · ${nf(rm.p,0)} P · ${nf(rm.g,0)} G · ${nf(rm.l,0)} L`)+
+      `<div class="rform"><label>Nom<input id="recName" value="${esc(r.name)}" placeholder="ex. Chili, Lasagnes…"></label><label>Portions<input id="recPor" inputmode="numeric" value="${r.portions}"></label></div>
+      <h3>Ingrédients (poids total de la recette)</h3>
+      <div class="lines">${r.ings.length?r.ings.map((x,i)=>`<div class="rline"><span class="nm">${esc(x.f.n)}<br><small class="sub">${nf(macro(x.f,x.q).kcal,0)} kcal</small></span><input data-rq="${i}" inputmode="decimal" value="${nf(x.q,x.q%1?1:0)}" aria-label="Quantité en ${x.f.ml?"ml":"g"}"><button class="xbtn" data-rdel="${i}" aria-label="Retirer">×</button></div>`).join(""):`<p class="sub">Ajoute les ingrédients avec leur poids pour toute la recette.</p>`}</div>
+      <button class="btn" data-nav="recadd">+ Ajouter un ingrédient</button>
+      <p class="sub">Total : ${nf(tm.kcal,0)} kcal pour ${nf(r.ings.reduce((a,x)=>a+(+x.q||0),0),0)} g.</p>
+      <button class="btn primary bigbtn" data-nav="recsave">Enregistrer la recette</button>${s.exists?`<button class="btn ghost danger" data-nav="recdel">Supprimer la recette</button>`:""}`; return; }
   if (s.v==="cat"){ const c=cfg(); const list=c.cats[s.cat]||[]; const its=(d.meals[s.meal]||[]).filter(x=>x.cat===s.cat); const lab=CATS.find(x=>x[0]===s.cat)[1];
     h.innerHTML=backHead(lab, mealName(s.meal))+`<div class="opts">${list.map((o,i)=>{ const m=macro(o.f,o.q); const sel=its.some(x=>x.f.n===o.f.n); return `<button class="opt${sel?" sel":""}" data-opt="${i}"><span class="nm"><b>${esc(o.f.n)}</b><small>${qtyLabel(o.f,o.q)} · ${nf(m.p,0)} g prot.</small></span><span class="kc">${nf(m.kcal,0)}<small> kcal</small></span></button>`; }).join("")}
       <button class="opt other" data-opt="autre"><span class="nm"><b>Autre</b><small>Rechercher, scanner ou créer</small></span><span class="kc">+</span></button></div>`+
@@ -1926,6 +2094,24 @@ $("#nSub").addEventListener("click", e=>{
   if (nav==="back") return back();
   if (b.dataset.pdj){ const k=b.dataset.pdj; if (k==="autre"){ nStack=[{v:"edit",meal:"pdj"}]; return renderNutrition(); }
     d.meals.pdj=clone(cfg().pdj[k]).map(x=>({...x,id:nid()})); saveDay(); nStack=[]; lastPop="pdj"; renderNutrition(); toast(`Petit-déj ${k==="light"?"light":"normal"} ajouté · ${nf(sumItems(d.meals.pdj).kcal,0)} kcal`); scrollTo({top:0}); return; }
+  if (b.dataset.fav){ const c=cfg(); const f=c.favs.find(x=>x.id===b.dataset.fav); if (!f) return; const meal=s.meal||top()?.meal; const ids=[];
+    const add=clone(f.items).map(x=>{ const id=nid(); ids.push(id); return {...x,id}; }); (d.meals[meal] ||= []).push(...add); saveDay();
+    if (s.v==="fav") nStack.pop(); renderNutrition(); toast(`Ajouté : ${f.name} · ${nf(sumItems(add).kcal,0)} kcal`, ()=>{ const dd=ensureDay(); dd.meals[meal]=(dd.meals[meal]||[]).filter(x=>!ids.includes(x.id)); saveDay(); renderNutrition(); }); return; }
+  if (b.dataset.favm){ nStack.push({v:"fav",id:b.dataset.favm,meal:s.meal}); renderNutrition(); scrollTo({top:0}); return; }
+  if (b.dataset.fdel!=null){ const f=cfg().favs.find(x=>x.id===s.id); f.items.splice(+b.dataset.fdel,1); saveCfg(); return renderSub(); }
+  if (nav==="favadd"){ return openPick(f=>{ const fv=cfg().favs.find(x=>x.id===s.id); fv.items.push({f,q:f.u||100}); saveCfg(); renderNutrition(); }); }
+  if (nav==="favdel"){ if (!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent="Confirmer la suppression"; return; } const c=cfg(); c.favs=c.favs.filter(x=>x.id!==s.id); saveCfg(); nStack.pop(); return renderNutrition(); }
+  if (nav==="savefav"){ const its=d.meals[s.meal]||[]; if (!its.length) return; const name=prompt("Nom du favori", `${mealName(s.meal)} habituel`); if (!name) return;
+    const c=cfg(); c.favs.push({id:nid(),name:name.trim(),meal:s.meal,items:its.map(x=>({f:clone(x.f),q:x.q}))}); saveCfg(); renderSub(); toast(`« ${name.trim()} » enregistré dans tes favoris`); return; }
+  if (b.dataset.rec){ const r=cfg().recipes.find(x=>x.id===b.dataset.rec); if (!r) return; const f=recipeFood(r); nStack.push({v:"qty",meal:s.meal,f,q:f.u,def:f.u}); renderNutrition(); scrollTo({top:0}); return; }
+  if (b.dataset.redit){ const r=cfg().recipes.find(x=>x.id===b.dataset.redit); nStack.push({v:"recipe",r:clone(r),exists:true}); renderNutrition(); scrollTo({top:0}); return; }
+  if (nav==="newrec"){ nStack.push({v:"recipe",r:{id:nid(),name:"",portions:4,ings:[]}}); renderNutrition(); scrollTo({top:0}); return; }
+  if (nav==="recadd"){ return openPick(f=>{ s.r.ings.push({f:{n:f.n,k:f.k,p:f.p,g:f.g,l:f.l,...(f.ml?{ml:1}:{})},q:f.u||100}); renderNutrition(); }); }
+  if (b.dataset.rdel!=null){ s.r.ings.splice(+b.dataset.rdel,1); return renderSub(); }
+  if (nav==="recsave"){ const r=s.r; r.name=($("#recName").value||"").trim(); r.portions=Math.max(1,Math.round(num($("#recPor").value)||1));
+    if (!r.name) return toast("Donne un nom à la recette."); if (!r.ings.length) return toast("Ajoute au moins un ingrédient.");
+    const c=cfg(); const i=c.recipes.findIndex(x=>x.id===r.id); if (i>=0) c.recipes[i]=clone(r); else c.recipes.push(clone(r)); saveCfg(); nStack.pop(); renderNutrition(); toast(`Recette « ${r.name} » enregistrée`); return; }
+  if (nav==="recdel"){ if (!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent="Confirmer la suppression"; return; } const c=cfg(); c.recipes=c.recipes.filter(x=>x.id!==s.r.id); saveCfg(); nStack.pop(); return renderNutrition(); }
   if (b.dataset.plat!=null){ const o=cfg().plats[+b.dataset.plat]; nStack.push({v:"qty",meal:s.meal,f:clone(o.f),q:o.q,def:o.q}); renderNutrition(); scrollTo({top:0}); return; }
   if (b.dataset.cat){ nStack.push({v:"cat",meal:s.meal,cat:b.dataset.cat}); renderNutrition(); scrollTo({top:0}); return; }
   if (b.dataset.opt){ if (b.dataset.opt==="autre"){ return openPick(f=>{ nStack.push({v:"qty",meal:s.meal,cat:s.cat,f,q:f.u?f.u:100,def:100,learn:true}); renderNutrition(); }); }
@@ -1947,6 +2133,11 @@ $("#nSub").addEventListener("click", e=>{
   if (nav==="clear"){ if (!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent="Confirmer"; setTimeout(()=>{ if (b.isConnected){ b.classList.remove("armed"); b.textContent="Vider ce repas"; } },3000); return; } d.meals[s.meal]=[]; saveDay(); nStack=[]; return renderNutrition(); }
   if (nav==="done"){ const k=s.meal; nStack=[]; if ((d.meals[k]||[]).length) lastPop=k; renderNutrition(); scrollTo({top:0}); return; }
 });
+$("#nSub").addEventListener("change", e=>{ const s=top(); const t=e.target; const v=num(t.value);
+  if (t.dataset.rq!=null && isFinite(v)){ s.r.ings[+t.dataset.rq].q=v; return renderSub(); }
+  if (t.id==="recName"){ s.r.name=t.value.trim(); return; } if (t.id==="recPor" && isFinite(v)){ s.r.portions=Math.max(1,Math.round(v)); return renderSub(); }
+  if (t.dataset.fq!=null && isFinite(v)){ const f=cfg().favs.find(x=>x.id===s.id); f.items[+t.dataset.fq].q=v; saveCfg(); return renderSub(); }
+  if (t.id==="favName" && t.value.trim()){ const f=cfg().favs.find(x=>x.id===s.id); f.name=t.value.trim(); saveCfg(); } });
 $("#nSub").addEventListener("input", e=>{ if (e.target.id!=="nQv") return; const s=top(); const v=num(e.target.value); if (!isFinite(v)) return; s.q=s.f.u? v*s.f.u : v;
   const m=macro(s.f,s.q); const bs=$$(".qmac b"); [m.kcal,m.p,m.g,m.l].forEach((x,i)=>bs[i].textContent=nf(x,0)); });
 $("#nSub").addEventListener("focusin", e=>{ if (e.target.id==="nQv") e.target.select(); });
@@ -1960,17 +2151,18 @@ $("#npClose").onclick=closePick;
 function recentsN(){ const seen=new Map(); for (const d of Object.values(nLog)) for (const k in d.meals||{}) for (const it of d.meals[k]||[]) if (!seen.has(it.f.n)) seen.set(it.f.n,it.f); return [...seen.values()]; }
 function nSearch(q){
   const toks=norm(q.trim()).split(/\s+/).filter(Boolean); const res=[]; const match=f=>toks.every(t=>(f._s||norm(f.n)).includes(t));
-  const mine=[...nFoods, ...recentsN().filter(f=>!nFoods.some(x=>x.n===f.n))];
+  const recs=cfg().recipes.map(r=>({...recipeFood(r),src:"recette"}));
+  const mine=[...recs, ...nFoods.filter(f=>!recs.some(x=>x.n===f.n)), ...recentsN().filter(f=>!nFoods.some(x=>x.n===f.n) && !recs.some(x=>x.n===f.n))];
   for (const f of mine) if (!toks.length || match(f)) res.push({...f, src:f.src||"perso"});
   if (toks.length && ciqual) res.push(...ciqual.filter(match).sort((a,b)=>(a._s.startsWith(toks[0])?0:1)-(b._s.startsWith(toks[0])?0:1) || a.n.length-b.n.length).slice(0,40));
   showRes(res.slice(0,60), toks.length?"Aucun résultat. Essaie Open Food Facts ou crée l'aliment.":"Tes aliments récents apparaîtront ici. Tape un nom pour chercher dans la base Ciqual.");
 }
 let lastRes=[];
-function showRes(list, empty){ lastRes=list; $("#npRes").innerHTML = list.length ? list.map((f,i)=>`<button data-i="${i}"><span style="color:var(--fg);font-size:14px;white-space:normal"><span class="src">${f.src==="ciqual"?"Ciqual":f.src==="off"?"Open Food Facts":"Mes aliments"}</span>${esc(f.n)}</span><span>${nf(f.k||0,0)} kcal<br>${nf(f.p||0,0)} P / 100 g</span></button>`).join("") : `<p>${esc(empty)}</p>`; }
+function showRes(list, empty){ lastRes=list; $("#npRes").innerHTML = list.length ? list.map((f,i)=>`<button data-i="${i}"><span style="color:var(--fg);font-size:14px;white-space:normal"><span class="src">${f.src==="ciqual"?"Ciqual":f.src==="off"?"Open Food Facts":f.src==="recette"?"Ma recette · 1 portion = "+nf(f.u,0)+" g":"Mes aliments"}</span>${esc(f.n)}</span><span>${nf(f.k||0,0)} kcal<br>${nf(f.p||0,0)} P / 100 g</span></button>`).join("") : `<p>${esc(empty)}</p>`; }
 let sT; $("#npQ").addEventListener("input", e=>{ clearTimeout(sT); sT=setTimeout(()=>nSearch(e.target.value),120); });
 $("#npRes").addEventListener("click", e=>{ const b=e.target.closest("button[data-i]"); if (b) pickFood(lastRes[+b.dataset.i]); });
-async function rememberFood(f){ if (f.src==="ciqual"||nFoods.some(x=>x.n===f.n)) return; const d={n:f.n,k:f.k,p:f.p,g:f.g,l:f.l,src:f.src||"perso"}; if (f.u) d.u=f.u; if (f.code) d.code=f.code; nFoods.push(d); try{ await db.collection("foods").doc(nid()).set(d); }catch{} }
-function pickFood(f0){ const f={n:f0.n,k:+f0.k||0,p:+f0.p||0,g:+f0.g||0,l:+f0.l||0}; if (f0.u) f.u=+f0.u; rememberFood(f0); closePick(); const cb=nPickCb; nPickCb=null; cb&&cb(f); scrollTo({top:0}); }
+async function rememberFood(f){ if (f.src==="ciqual"||f.src==="recette"||nFoods.some(x=>x.n===f.n)) return; const d={n:f.n,k:f.k,p:f.p,g:f.g,l:f.l,src:f.src||"perso"}; if (f.u) d.u=f.u; if (f.code) d.code=f.code; nFoods.push(d); try{ await db.collection("foods").doc(nid()).set(d); }catch{} }
+function pickFood(f0){ const f={n:f0.n,k:+f0.k||0,p:+f0.p||0,g:+f0.g||0,l:+f0.l||0}; if (f0.u) f.u=+f0.u; if (f0.un) f.un=f0.un; if (f0.ml) f.ml=1; rememberFood(f0); closePick(); const cb=nPickCb; nPickCb=null; cb&&cb(f); scrollTo({top:0}); }
 $("#npNew").onclick=()=>{ $("#npForm").hidden=false; $("#nfN").value=$("#npQ").value; $("#nfN").focus(); };
 $("#npForm").addEventListener("submit", e=>{ e.preventDefault(); const f={n:$("#nfN").value.trim(), k:num($("#nfK").value)||0, p:num($("#nfP").value)||0, g:num($("#nfG").value)||0, l:num($("#nfL").value)||0, src:"perso"}; const u=num($("#nfU").value); if (isFinite(u)&&u>0) f.u=u; if (f.n) pickFood(f); });
 function offToFood(p,code){ const n=p.nutriments||{}; const k=n["energy-kcal_100g"] ?? (n["energy_100g"]? n["energy_100g"]/4.184 : null); if (k==null) return null;
@@ -2047,7 +2239,7 @@ function renderToday(){
   const done=sessions.filter(x=>x.date===today);
   const sg=suggestNext();
   $("#tdSeance").className="tcard tlink"+(done.length?" ok":" hot");
-  $("#tdSeance").innerHTML = done.length ? `<span class="k">Séance du jour</span><span class="v">${esc(done.map(x=>TL[x.type]).join(" + "))}</span><span class="s">${kg(done.reduce((a,x)=>a+(x.tonnage||0),0))}${done[0].durationMin?` · ${done[0].durationMin} min`:""}</span><span class="go">Voir mes séances →</span>`
+  $("#tdSeance").innerHTML = done.length ? `<span class="k">Séance du jour</span><span class="v">${esc(done.map(x=>sLabel(x)).join(" + "))}</span><span class="s">${kg(done.reduce((a,x)=>a+(x.tonnage||0),0))}${done[0].durationMin?` · ${done[0].durationMin} min`:""}</span><span class="go">Voir mes séances →</span>`
     : draft ? `<span class="k">Séance en cours</span><span class="v">${esc(TL[draft.type])}</span><span class="go">Reprendre →</span>`
     : sg ? `<span class="k">Séance suggérée</span><span class="v">${esc(TL[sg.type])}</span><span class="s">${esc(sg.why)}</span><span class="go">Commencer →</span>` : `<span class="k">Séance</span><span class="v">Repos</span><span class="s">Ta semaine est complète</span>`;
   // nutrition
@@ -2233,7 +2425,7 @@ else {
       if (current==="tanita") renderTanita();
     }, ()=>{});
     db.collection("tanita").onSnapshot(s=>{ tanitas=s.docs.map(d=>d.data()).filter(t=>t&&t.date).sort((a,b)=>a.date<b.date?-1:1); if (current==="tanita") renderTanita(); }, ()=>{});
-    db.doc("nutrition/config").onSnapshot(s=>{ if (s.exists) nCfg={...clone(DEF_CFG), ...s.data()}; if (current==="nutrition" && !nStack.length) renderNutrition(); }, ()=>{});
+    db.doc("nutrition/config").onSnapshot(s=>{ if (s.exists) { nCfg=migrateCfg({...clone(DEF_CFG), ...s.data()}); if (!s.data().favs||!s.data().recipes) saveCfg(); } if (current==="nutrition" && !nStack.length) renderNutrition(); }, ()=>{});
     db.collection("nlog").onSnapshot(s=>{ s.docs.forEach(d=>{ const x=d.data(); if (x&&x.date) nLog[d.id]=x; }); nLoaded=true; if (current==="nutrition" && !nStack.length) renderNutrition(); }, ()=>{});
     db.collection("steps").onSnapshot(s=>{ s.docs.forEach(d=>{ const x=d.data(); if (x&&x.date) steps[d.id]=x; }); }, ()=>{});
     db.collection("weighins").onSnapshot(s=>{ s.docs.forEach(d=>{ const x=d.data(); if (x&&x.date) weighins[d.id]=x; }); if (current==="courbes") renderCourbes(); }, ()=>{});
