@@ -15,11 +15,12 @@
   const saveQ=()=>IDB.set("q:pending", queue);
   const isNet=e=>!navigator.onLine || /fetch|network|load failed|timeout/i.test(String(e?.message||e));
   let pill=null; function showSync(){ if (!pill){ pill=document.createElement("div"); pill.className="offpill"; pill.hidden=true; document.body.append(pill); }
-    const off=!navigator.onLine; pill.hidden=!(off||queue.length); pill.textContent = off ? `Hors ligne${queue.length?` · ${queue.length} modification${queue.length>1?"s":""} en attente`:" · tout reste enregistré sur ce téléphone"}` : `Synchronisation de ${queue.length} modification${queue.length>1?"s":""}…`; }
+    const off=!navigator.onLine; const n=queue.filter(o=>!o.uid||!uid||o.uid===uid).length; pill.hidden=!(off||n); pill.textContent = off ? `Hors ligne${n?` · ${n} modification${n>1?"s":""} en attente`:" · tout reste enregistré sur ce téléphone"}` : `Synchronisation de ${n} modification${n>1?"s":""}…`; }
   async function flush(){ await qLoaded; if (!navigator.onLine || !queue.length || !uid) return showSync(); showSync();
-    while (queue.length){ const op=queue[0]; try{
+    for (const op of [...queue]){ if (op.uid && op.uid!==uid) continue; // une modification d'un autre compte attend que ce compte se reconnecte
+      try{
         const r = op.t==="set" ? await sb.from("docs").upsert({path:op.path, coll:op.coll, data:op.data, updated_at:op.at}) : await sb.from("docs").delete().eq("path",op.path);
-        if (r.error && isNet(r.error)) break; queue.shift(); await saveQ(); }catch(e){ break; } }
+        if (r.error && isNet(r.error)) break; queue=queue.filter(q=>q!==op); await saveQ(); }catch(e){ break; } }
     showSync(); }
   addEventListener("online", flush); addEventListener("offline", showSync); setInterval(flush, 20000);
   async function write(op){ try{
@@ -52,9 +53,9 @@
     return { id, path,
       async get(){ await load(coll); return snapDoc(id, cache[coll].get(id)); },
       async set(data){ const d=JSON.parse(JSON.stringify(data)); (cache[coll] ||= new Map()).set(id, d); emit(coll); persist(coll);
-        await write({t:"set", path, coll, data:d, at:new Date().toISOString()}); },
+        await write({t:"set", path, coll, data:d, at:new Date().toISOString(), uid}); },
       async update(data){ await load(coll); const cur=cache[coll].get(id); if (cur===undefined) throw {code:"invalid_argument",message:"absent"}; return this.set(merge(cur,data)); },
-      async delete(){ cache[coll]?.delete(id); emit(coll); persist(coll); await write({t:"del", path, coll}); },
+      async delete(){ cache[coll]?.delete(id); emit(coll); persist(coll); await write({t:"del", path, coll, uid}); },
       onSnapshot(next, err){ (docListeners[path] ||= new Set()).add(next); load(coll).then(()=>next(snapDoc(id, cache[coll].get(id)))).catch(e=>err&&err({code:"unavailable",message:String(e?.message||e)})); return ()=>docListeners[path].delete(next); },
       collection(sub){ return collRef(path+"/"+sub); } };
   }
@@ -93,7 +94,13 @@
 
   const caps={db, assets, downloads};
   window.claude={ use:name=>ready.then(()=>caps[name]||null) };
-  window.transfoAuth={ sb, signOut:async()=>{ await sb.auth.signOut(); try{ localStorage.removeItem(URLKEY); }catch{} location.reload(); } };
+  async function exportAll(){ let rows=[], off=0; for(;;){ const {data,error}=await sb.from("docs").select("path,coll,data,updated_at").range(off,off+999); if (error) throw error; rows=rows.concat(data); if (data.length<1000) break; off+=1000; }
+    const b=new Blob([JSON.stringify({exportedAt:new Date().toISOString(), docs:rows},null,1)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=`transfo-export-${new Date().toISOString().slice(0,10)}.json`; document.body.append(a); a.click(); a.remove(); return rows.length; }
+  document.addEventListener("click", async e=>{ if (e.target.id!=="expOpen") return; e.target.disabled=true; try{ const n=await exportAll(); e.target.textContent=`Export prêt (${n} éléments)`; }catch{ e.target.textContent="Export impossible"; } e.target.disabled=false; });
+  window.transfoAuth={ sb, signOut:async()=>{ await sb.auth.signOut(); try{ localStorage.removeItem(URLKEY); }catch{}
+    // rien ne reste sur l'appareil après la déconnexion, sauf les modifications pas encore envoyées
+    try{ const keep=queue.length; if (!keep) await new Promise(r=>{ const q=indexedDB.deleteDatabase("transfo"); q.onsuccess=q.onerror=q.onblocked=()=>r(); }); }catch{}
+    location.reload(); } };
 
   // Écran de connexion
   async function boot(){
