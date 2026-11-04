@@ -3,7 +3,8 @@
 // Secrets requis : ANTHROPIC_API_KEY, COACH_EMAIL (seul ce compte peut utiliser le coach).
 
 const MODEL = "claude-opus-5-5";
-const MAX_TOKENS = 4000;
+// Opus 5.5 réfléchit toujours avant de répondre : il faut de la marge pour la réflexion ET la réponse.
+const MAX_TOKENS = 16000;
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -40,7 +41,8 @@ Deno.serve(async (req) => {
     const out = await r.json();
     if (!r.ok) return json({ error: out?.error?.message ?? `Erreur API ${r.status}` }, 502);
     const text = (out.content ?? []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("\n");
-    return json({ text, usage: out.usage, model: out.model });
+    if (!text.trim()) return json({ error: `Réponse vide (arrêt : ${out.stop_reason ?? "inconnu"}). Relance l'analyse.` }, 502);
+    return json({ text, usage: out.usage, model: out.model, stop: out.stop_reason });
   } catch (e) {
     return json({ error: String((e as Error)?.message ?? e) }, 500);
   }

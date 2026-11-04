@@ -2436,7 +2436,7 @@ async function callCoach(messages){
   const sbc=window.transfoAuth?.sb; if (!sbc) throw new Error("Coach indisponible dans cette version.");
   const {data,error}=await sbc.functions.invoke("coach",{body:{system:coachPrompt(), messages}});
   if (error){ let m=error.message; try{ const j=await error.context?.json?.(); if (j?.error) m=j.error; }catch{} throw new Error(m); }
-  if (data?.error) throw new Error(data.error); return data; }
+  if (data?.error) throw new Error(data.error); if (!String(data?.text||"").trim()) throw new Error("réponse vide. Mets à jour le code de la fonction coach dans Supabase (nouvelle version), puis relance."); return data; }
 const costOf=u=>u? (u.input_tokens||0)*4e-6+(u.output_tokens||0)*20e-6 : 0;
 function coachErr(e){ const m=String(e?.message||e);
   if (/Failed to send|fetch|network/i.test(m)) return "Impossible de joindre le coach. Vérifie ta connexion, ou que la fonction « coach » est bien déployée dans Supabase.";
