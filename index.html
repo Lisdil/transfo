@@ -578,6 +578,7 @@ a.btn{text-decoration:none;color:var(--fg)}
 .chbox textarea{resize:none;max-height:160px}
 @media (min-width:680px){.chbox{bottom:8px}}
 .cmsg .chimg,.cq img{max-width:160px;border-radius:10px;display:block;margin-bottom:6px}
+#tdPas{grid-column:1 / -1}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:500;z-index:60;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -2446,14 +2447,20 @@ setInterval(()=>{ if (current!=="today" || document.visibilityState!=="visible" 
 let steps={};
 const stepsGoal=()=>goals.steps||10000;
 function stepsAvg(end,n=7){ const v=[]; for (let i=0;i<n;i++){ const d=iso(addDays(parseISO(end),-i)); if (isFinite(steps[d]?.n)) v.push(steps[d].n); } return v.length?{avg:v.reduce((a,b)=>a+b,0)/v.length,n:v.length}:null; }
+let psDay=null;
 function renderStepsCard(){
   const t=iso(new Date()), y=iso(addDays(new Date(),-1)); const today=steps[t]?.n, yest=steps[y]?.n; const a=stepsAvg(y);
   const c=$("#tdPas"); const g=stepsGoal();
   c.className="tcard"+((yest||0)>=g?" ok":"");
   c.innerHTML=`<span class="k">Pas</span><span class="v">${isFinite(today)?nf(today,0):"—"}<small style="font:400 12px var(--f-body);color:var(--muted)"> aujourd'hui</small></span>
     <span class="s">Hier ${isFinite(yest)?nf(yest,0):"—"} · moyenne 7 j ${a?nf(a.avg,0):"—"}</span><div class="minibar"><em style="width:${Math.min(100,(a?.avg||0)/g*100)}%;background:var(--s3)"></em></div>
-    <div class="row" style="gap:6px;flex-wrap:nowrap"><input id="psIn" inputmode="numeric" class="exsel" style="flex:1;min-width:0" placeholder="Pas d'hier"><button class="btn" id="psSave">OK</button></div>`;
-  $("#psSave").onclick=async()=>{ const v=Math.round(num($("#psIn").value)); if (!isFinite(v)||v<0) return toast("Nombre de pas invalide."); steps[y]={date:y,n:v}; renderToday(); try{ await db.doc("steps/"+y).set(steps[y]); toast("Pas d'hier enregistrés"); }catch{ toast("Enregistrement impossible."); } };
+    <div class="row" style="gap:6px;flex-wrap:nowrap"><input type="date" id="psDate" class="exsel" style="width:9.5em;min-width:0" value="${psDay||y}" max="${t}" aria-label="Jour"><input id="psIn" inputmode="numeric" class="exsel" style="flex:1;min-width:0" placeholder="Nombre de pas" value="${isFinite(steps[psDay||y]?.n)?steps[psDay||y].n:""}"><button class="btn" id="psSave">OK</button></div>
+    ${(()=>{ const miss=[]; for (let k=1;k<=14;k++){ const d=iso(addDays(new Date(),-k)); if (!isFinite(steps[d]?.n)) miss.push(d); } return miss.length?`<div class="chips" style="gap:6px"><span class="sub">À rattraper :</span>${miss.slice(0,7).map(d=>`<button data-psd="${d}" style="min-height:32px;padding:4px 10px">${dfmt(d,{weekday:"short",day:"numeric"})}</button>`).join("")}</div>`:""; })()}`;
+  const pick=d=>{ psDay=d; renderStepsCard(); $("#psIn").focus(); };
+  $("#psDate").onchange=e=>{ if (e.target.value && e.target.value<=t) pick(e.target.value); };
+  c.querySelectorAll("button[data-psd]").forEach(b=>b.onclick=()=>pick(b.dataset.psd));
+  $("#psSave").onclick=async()=>{ const d=$("#psDate").value||y; if (d>t) return toast("Choisis un jour passé ou aujourd'hui."); const v=Math.round(num($("#psIn").value)); if (!isFinite(v)||v<0) return toast("Nombre de pas invalide.");
+    steps[d]={date:d,n:v}; psDay=null; renderToday(); try{ await db.doc("steps/"+d).set(steps[d]); toast(`Pas du ${dfmt(d,{weekday:"long",day:"numeric",month:"long"})} enregistrés`); }catch{ toast("Enregistrement impossible."); } };
 }
 function renderCoachCard(){
   const c=$("#tdCoach"); const isThu=new Date().getDay()===4; const mon=iso(monday(new Date())); const saved=!!weeksMap[mon];
