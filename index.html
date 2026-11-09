@@ -574,6 +574,10 @@ a.btn{text-decoration:none;color:var(--fg)}
 .camcount{position:absolute;inset:0;display:grid;place-items:center;font:700 120px/1 var(--f-display);text-shadow:0 2px 12px rgba(0,0,0,.6)}
 .cam .sub{color:#cfd3d6}
 .cam .btn{color:var(--fg)}.cam .btn.primary{color:#111}
+.chbox{position:sticky;bottom:calc(86px + env(safe-area-inset-bottom,0px));background:var(--bg);padding:6px 0;z-index:2}
+.chbox textarea{resize:none;max-height:160px}
+@media (min-width:680px){.chbox{bottom:8px}}
+.cmsg .chimg,.cq img{max-width:160px;border-radius:10px;display:block;margin-bottom:6px}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:500;z-index:60;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -632,7 +636,17 @@ a.btn{text-decoration:none;color:var(--fg)}
   <!-- COACH -->
   <section class="view" id="v-rapport" hidden>
     <div class="row"><h2>Coach</h2></div>
-    <div class="duo"><div class="col">
+    <div class="subnav" id="cTabs"><a href="#" data-ct="chat">Discussion</a><a href="#" data-ct="bilans">Bilans</a></div>
+    <div id="cChatV" hidden>
+      <div class="row"><span class="sub" id="chHead">Pose tes questions au coach : séance du jour, repas, fatigue, douleur…</span><span class="spacer"></span><button class="btn ghost" id="chNew" style="min-height:36px">Nouvelle discussion</button></div>
+      <div class="cthread" id="chMsgs"></div>
+      <div class="chips" id="chSugg"></div>
+      <div class="cask chbox"><label class="btn ghost" style="cursor:pointer;min-width:44px;padding:0 10px" aria-label="Joindre une photo">📷<input type="file" id="chImg" accept="image/*" hidden></label><textarea id="chQ" rows="1" placeholder="Ta question…"></textarea><button class="btn primary" id="chGo">Envoyer</button></div>
+      <div id="chPrev" class="row" hidden style="gap:8px"><img id="chPrevImg" alt="Photo jointe" style="width:56px;height:56px;object-fit:cover;border-radius:8px"><button class="btn ghost" id="chPrevDel" style="min-height:36px">Retirer la photo</button></div>
+      <p class="sub" id="chMsg"></p>
+      <div id="chHist"></div>
+    </div>
+    <div class="duo" id="cBilV"><div class="col">
       <div class="tcard coachgo"><span class="k">Bilan de la semaine</span>
         <p class="sub" id="cWhen" style="margin:0"></p>
         <button class="btn primary bigbtn" id="cRun">Analyser ma semaine</button>
@@ -2522,7 +2536,53 @@ async function buildCollage(){
   return new Promise(res=>{ try{ cv.toBlob(b=>res(b),"image/jpeg",.85); }catch{ res(null); } });
 }
 let rpText="", rpBlob=null;
+/* ---------- Discussion libre avec le coach ---------- */
+let chats={}, chatId=null, chatBusy=false, chImg=null, coachTab=null;
+const CHAT_RULES="\n\n## Mode discussion\nTu réponds ici à une question posée en dehors du bilan hebdomadaire. Réponds court et concret (5 à 12 lignes en général), sans reprendre le plan du bilan ni les sections à emoji. N'ajoute un bloc VARIABLES ou SÉANCES que si tu recommandes explicitement de changer mes objectifs ou une séance, dans le même format que d'habitude.";
+function chatCtx(){ const last=Object.values(coachDocs).filter(x=>x.thread?.[1]).sort((a,b)=>b.week.localeCompare(a.week))[0];
+  return `# CONTEXTE (données à jour de l'app, ${dfmt(iso(new Date()),{weekday:"long",day:"numeric",month:"long"})}, ${new Date().toTimeString().slice(0,5)})\n\n${buildReport()}`+(last?`\n\n# TON DERNIER BILAN (semaine du ${dfmt(last.week,{day:"numeric",month:"long"})})\n${firstReply(last)}`:""); }
+function setCoachTab(t){ coachTab=t; $("#cChatV").hidden=t!=="chat"; $("#cBilV").hidden=t!=="bilans"; $$("#cTabs a").forEach(a=>a.toggleAttribute("aria-current",a.dataset.ct===t)); if (t==="chat") renderChat(); }
+$("#cTabs").addEventListener("click", e=>{ const a=e.target.closest("a[data-ct]"); if (!a) return; e.preventDefault(); setCoachTab(a.dataset.ct); });
+function chatMsgHTML(c){ return c.msgs.map((m,i)=>{
+  if (m.role==="user") return `<div class="cq">${m.img?`<img src="data:image/jpeg;base64,${m.img}" alt="Photo envoyée">`:""}${esc(m.text)}</div>`;
+  const ch=varChanges(parseVars(m.text)).ch, ss=parseSess(m.text);
+  const clean=m.text.replace(/```[^`]*?(?:VARIABLES|S[ÉE]ANCES)[\s\S]*?```/gi,"").replace(/\n(?:VARIABLES|S[ÉE]ANCES)\s*\n(?:.+\n?)+/gi,"\n").trim();
+  return `<div class="cmsg">${mdHTML(clean)}</div>`+(/VARIABLES/i.test(m.text)&&ch.length?`<div class="cvars"><span><b>Nouvelles variables :</b> ${esc(ch.join(" · "))}</span><button class="btn primary" data-chv="${i}">Appliquer</button></div>`:"")
+    +(ss.length?`<div class="cvars" style="flex-direction:column;align-items:stretch"><b>Séance ajustée</b><ol style="margin:4px 0 0;padding-left:20px">${ss.map(l=>`<li>${esc(TL[l.type])} · ${esc(l.name)} · ${l.n}×${nf(l.r,l.r%1?1:0)}${l.w!=null?` @ ${wfmt(l.w)} kg`:""}</li>`).join("")}</ol>${m.sessBackup?`<div class="row"><span class="sub">✓ Appliqué</span><span class="spacer"></span><button class="btn ghost" data-chsu="${i}" style="min-height:36px">Annuler</button></div>`:`<button class="btn primary" data-chs="${i}">Appliquer à mes séances</button>`}</div>`:""); }).join(""); }
+function renderChat(){ const c=chats[chatId];
+  $("#chMsgs").innerHTML = c?.msgs?.length ? chatMsgHTML(c) : `<p class="sub">Le coach connaît tes données à jour (pesées, nutrition, séances, forme, pas) et ton dernier bilan.</p>`;
+  if (chatBusy) $("#chMsgs").insertAdjacentHTML("beforeend",`<div class="cmsg sub"><span><span class="spin"></span>Le coach réfléchit…</span></div>`);
+  $("#chSugg").innerHTML = c?.msgs?.length ? "" : ["Que manger ce soir pour finir mes protéines ?","Je suis fatigué : j'allège ma séance ?","Mon poids stagne, je m'inquiète ?","J'ai mal à l'épaule au développé, que faire ?"].map(q=>`<button data-chq="${esc(q)}">${esc(q)}</button>`).join("");
+  const cost=c? nf(c.cost||0,2)+" $" : ""; $("#chHead").textContent = c?.msgs?.length ? `Discussion du ${dfmt(c.createdAt.slice(0,10),{day:"numeric",month:"long"})} · coût ≈ ${cost}` : "Pose tes questions au coach : séance du jour, repas, fatigue, douleur…";
+  const others=Object.values(chats).filter(x=>x.id!==chatId && x.msgs?.length).sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,15);
+  $("#chHist").innerHTML = others.length ? `<h3>Discussions précédentes</h3>`+others.map(x=>`<details class="panel chist"><summary><span class="chead"><b>${dfmt(x.createdAt.slice(0,10),{day:"numeric",month:"long"})}</b><button class="btn ghost" data-chopen="${x.id}" style="min-height:32px">Reprendre</button></span><span class="sub csyn">${esc(x.msgs[0].text.slice(0,120))}</span></summary><div class="cthread" style="margin-top:10px">${chatMsgHTML(x)}<button class="btn ghost danger" data-chdel="${x.id}" style="min-height:36px">Supprimer</button></div></details>`).join("") : "";
+}
+async function sendChat(q){ q=(q||"").trim(); if ((!q && !chImg) || chatBusy) return;
+  if (!chatId || !chats[chatId]){ chatId=uid(); chats[chatId]={id:chatId, createdAt:new Date().toISOString(), msgs:[], cost:0}; }
+  const c=chats[chatId]; c.msgs.push({role:"user", text:q||"(photo)", img:chImg||undefined, at:new Date().toISOString()}); chImg=null; $("#chPrev").hidden=true; $("#chQ").value=""; chatBusy=true; $("#chMsg").textContent=""; renderChat(); scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
+  try{
+    const hist=c.msgs.slice(-20).map((m,i,arr)=>{ const content=[]; if (m.img && i>=arr.length-3) content.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:m.img}}); content.push({type:"text",text:m.text}); return {role:m.role, content}; });
+    hist[0].content.unshift({type:"text", text:chatCtx()+"\n\n# MA QUESTION"});
+    const r=await callCoach(hist, CHAT_RULES); c.msgs.push({role:"assistant", text:r.text, at:new Date().toISOString()}); c.cost=(c.cost||0)+costOf(r.usage);
+  }catch(e){ c.msgs.pop(); $("#chQ").value=q; $("#chMsg").textContent=coachErr(e); }
+  finally{ chatBusy=false; }
+  // les photos sont gardées pour l'affichage mais allégées avant l'enregistrement
+  try{ await db.doc("chat/"+c.id).set({...c, msgs:c.msgs.map(m=>m.img?{...m,img:m.img.length>120000?undefined:m.img}:m)}); }catch{}
+  renderChat(); scrollTo({top:document.body.scrollHeight,behavior:"smooth"}); }
+$("#chGo").onclick=()=>sendChat($("#chQ").value);
+$("#chQ").addEventListener("input", e=>{ e.target.style.height="auto"; e.target.style.height=Math.min(160,e.target.scrollHeight)+"px"; });
+$("#chNew").onclick=()=>{ chatId=null; renderChat(); $("#chQ").focus(); };
+$("#chImg").onchange=async e=>{ const f=e.target.files?.[0]; e.target.value=""; if (!f) return; const b=await shrink(f,900); chImg=b? await blobB64(b):null; if (chImg){ $("#chPrevImg").src="data:image/jpeg;base64,"+chImg; $("#chPrev").hidden=false; } };
+$("#chPrevDel").onclick=()=>{ chImg=null; $("#chPrev").hidden=true; };
+$("#cChatV").addEventListener("click", async e=>{ const b=e.target.closest("button"); if (!b) return; const c=chats[chatId];
+  if (b.dataset.chq){ sendChat(b.dataset.chq); return; }
+  if (b.dataset.chopen){ e.preventDefault(); chatId=b.dataset.chopen; renderChat(); scrollTo({top:0}); return; }
+  if (b.dataset.chdel){ if (!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent="Confirmer la suppression"; return; } delete chats[b.dataset.chdel]; try{ await db.doc("chat/"+b.dataset.chdel).delete(); }catch{} renderChat(); return; }
+  if (b.dataset.chv!=null && c){ const ch=await applyVars(c.msgs[+b.dataset.chv].text); if (ch.length) toast("Appliqué : "+ch.join(" · ")); renderChat(); return; }
+  if (b.dataset.chs!=null && c){ const m=c.msgs[+b.dataset.chs]; const bk={}; const done=await applySess(parseSess(m.text),bk); if (done.length){ m.sessBackup=bk; try{ await db.doc("chat/"+c.id).set(c); }catch{} toast("Séances mises à jour : "+done.join(", ")); } renderChat(); return; }
+  if (b.dataset.chsu!=null && c){ const m=c.msgs[+b.dataset.chsu]; for (const [type,t] of Object.entries(m.sessBackup||{})){ templates[type]=t; try{ await db.doc("templates/"+type).set(t); }catch{} } delete m.sessBackup; try{ await db.doc("chat/"+c.id).set(c); }catch{} toast("Séances remises comme avant"); renderChat(); } });
 async function renderRapport(){
+  if (!coachTab) setCoachTab(new Date().getDay()===4 && !coachDocs[iso(monday(new Date()))] ? "bilans" : "chat"); else if (coachTab==="chat") renderChat();
   rpText=buildReport(); $("#rpText").textContent=rpText;
   renderCoach(); rpBlob=null; rpBlob=await buildCollage();
 }
@@ -2587,9 +2647,9 @@ async function aiMeal(txt, img){
   const arr=jsonIn(await callClaude(NUT_SYS,[{role:"user",content}]));
   return (Array.isArray(arr)?arr:[]).filter(x=>x&&x.n&&isFinite(+x.q)).map(x=>({f:{n:String(x.n).slice(0,80),k:+x.k||0,p:+x.p||0,g:+x.g||0,l:+x.l||0},q:Math.round(+x.q)})); }
 async function aiLibre(txt){ const o=jsonIn(await callClaude(NUT_SYS,[{role:"user",content:`Estime ce repas pris à l'extérieur : ${txt}\nRéponds au format {"k":950,"p":45,"g":90,"l":40} (totaux du repas).`}])); return {k:Math.round(+o.k||0),p:Math.round(+o.p||0),g:Math.round(+o.g||0),l:Math.round(+o.l||0)}; }
-async function callCoach(messages){
+async function callCoach(messages, extra=""){
   const sbc=window.transfoAuth?.sb; if (!sbc) throw new Error("Coach indisponible dans cette version.");
-  const {data,error}=await sbc.functions.invoke("coach",{body:{system:coachPrompt()+"\n\n## Contraintes permanentes (à respecter absolument)\n"+coachRules(), messages}});
+  const {data,error}=await sbc.functions.invoke("coach",{body:{system:coachPrompt()+"\n\n## Contraintes permanentes (à respecter absolument)\n"+coachRules()+extra, messages}});
   if (error){ let m=error.message; try{ const j=await error.context?.json?.(); if (j?.error) m=j.error; }catch{} throw new Error(m); }
   if (data?.error) throw new Error(data.error); if (!String(data?.text||"").trim()) throw new Error("réponse vide. Mets à jour le code de la fonction coach dans Supabase (nouvelle version), puis relance."); return data; }
 const costOf=u=>u? (u.input_tokens||0)*4e-6+(u.output_tokens||0)*20e-6 : 0;
@@ -2715,6 +2775,9 @@ else {
     db.collection("steps").onSnapshot(s=>{ s.docs.forEach(d=>{ const x=d.data(); if (x&&x.date) steps[d.id]=x; }); }, ()=>{});
     db.collection("weighins").onSnapshot(s=>{ s.docs.forEach(d=>{ const x=d.data(); if (x&&x.date) weighins[d.id]=x; }); if (current==="courbes") renderCourbes(); }, ()=>{});
     db.collection("forme").onSnapshot(s=>{ forme={}; s.docs.forEach(d=>{ const x=d.data(); if (x?.date) forme[x.date]=x; }); if (current==="today") renderToday(); }, ()=>{});
+    db.collection("chat").onSnapshot(s=>{ const keep=chatBusy&&chatId?chats[chatId]:null; chats={}; s.docs.forEach(d=>{ const x=d.data(); if (x?.id) chats[x.id]=x; }); if (keep) chats[chatId]=keep;
+      if (!chatId){ const recent=Object.values(chats).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0]; if (recent && Date.now()-new Date(recent.createdAt)<6*3600e3) chatId=recent.id; }
+      if (current==="rapport" && coachTab==="chat" && !chatBusy) renderChat(); }, ()=>{});
     db.doc("settings/coach").onSnapshot(s=>{ if (s.exists) coachCfg=s.data()||{}; if (current==="rapport") renderCoach(); }, ()=>{});
     db.collection("coach").onSnapshot(s=>{ coachDocs={}; s.docs.forEach(d=>{ const x=d.data(); if (x?.week) coachDocs[x.week]=x; }); if (current==="rapport" && !coachBusy) renderCoach(); }, ()=>{});
     db.doc("settings/goals").onSnapshot(s=>{ if (s.exists) goals={...goals,...s.data()}; }, ()=>{});
